@@ -15,9 +15,9 @@ import { format } from 'date-fns';
 import { ChevronDown, ChevronUp, Clock, MoreHorizontal, RefreshCw, Search, Trash, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useState, useMemo, useEffect } from 'react'
-import { BarLoader } from 'react-spinners';
 import { toast } from 'sonner';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink } from '@/components/ui/pagination';
+import { Loader } from 'lucide-react';
 
 const RECURRING_INTERVALS = {
     DAILY: "Daily",
@@ -158,7 +158,7 @@ const TransactionTable = ({ transactions }) => {
 
     return (
         <div className='space-y-4'>
-            {deleteLoading && <BarLoader className='mt-4' width={"100%"} color='#93333ea' />}
+            {deleteLoading && <div className="flex gap-2 items-center"><Loader className="animate-spin w-8 h-8"/>Loading...</div>}
 
             {/* Filters */}
             <div className='flex flex-col sm:flex-row gap-4'>

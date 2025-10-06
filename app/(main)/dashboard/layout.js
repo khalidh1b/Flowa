@@ -1,6 +1,5 @@
 import React, { Suspense } from 'react'
 import DashboardPage from './page'
-import { BarLoader, BeatLoader } from 'react-spinners'
 import { Loader } from 'lucide-react'
 
 const DashboardLayout = () => {
@@ -14,7 +13,6 @@ const DashboardLayout = () => {
 
             <Suspense fallback={<div className="flex gap-2 items-center"><Loader className="animate-spin w-8 h-8"/>Loading...</div>}>
                 <DashboardPage />
-
             </Suspense>
         </div>
     )

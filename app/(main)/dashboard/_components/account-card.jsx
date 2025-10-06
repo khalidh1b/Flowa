@@ -7,7 +7,6 @@ import useFetch from '@/hooks/use-fetch';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect } from 'react'
-import { BounceLoader } from 'react-spinners';
 import { toast } from 'sonner';
 
 const AccountCard = ({ account }) => {
@@ -44,7 +43,7 @@ const AccountCard = ({ account }) => {
                 <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
                     <CardTitle className='text-sm font-medium capitalize'> {name} </CardTitle>
                     <div className='p-2'>
-                        {updateDefaultLoading ? <BounceLoader size={24} /> : <Switch checked={isDefault} onClick={handleDefaultChange} disabled={updateDefaultLoading} />}
+                        {updateDefaultLoading ? <div className="flex gap-2 items-center"><Loader className="animate-spin w-8 h-8"/>Loading...</div> : <Switch checked={isDefault} onClick={handleDefaultChange} disabled={updateDefaultLoading} />}
                     </div>
                 </CardHeader>
                 <CardContent>

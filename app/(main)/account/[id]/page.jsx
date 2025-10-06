@@ -2,8 +2,8 @@ import { getAccountWithTransactions } from '@/app/actions/accounts';
 import { notFound } from 'next/navigation';
 import React, { Suspense } from 'react'
 import TransactionTable from '../_components/transaction.table';
-import { BarLoader } from 'react-spinners';
 import AccountChart from '../_components/account-chart';
+import { Loader } from 'lucide-react';
 
 const AccountsPage = async ({ params }) => {
     const { id } = await params;
@@ -30,12 +30,12 @@ const AccountsPage = async ({ params }) => {
             </div>
 
             {/* Chart Section */}
-            <Suspense fallback={<BarLoader className='mt-4' width={"100%"} color='#93333ea' />}>
+            <Suspense fallback={<div className="flex gap-2 items-center"><Loader className="animate-spin w-8 h-8"/>Loading...</div>}>
                 <AccountChart transactions={transactions} account={account}/>
             </Suspense>
 
             {/* Transaction Table */}
-            <Suspense fallback={<BarLoader className='mt-4' width={"100%"} color='#93333ea' />}>
+            <Suspense fallback={<div className="flex gap-2 items-center"><Loader className="animate-spin w-8 h-8"/>Loading...</div>}>
                 <TransactionTable transactions={transactions} />
             </Suspense>
         </div>
