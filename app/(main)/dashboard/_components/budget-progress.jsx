@@ -1,6 +1,6 @@
 "use client";
 
-import { updateBudget } from '@/actions/budget';
+import { updateBudget } from '@/app/actions/budget';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input';

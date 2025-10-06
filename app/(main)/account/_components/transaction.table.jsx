@@ -1,6 +1,6 @@
 "use client";
 
-import { bulkDeleteTransaction } from '@/actions/accounts';
+import { bulkDeleteTransaction } from '@/app/actions/accounts';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox'

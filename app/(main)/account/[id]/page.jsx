@@ -1,4 +1,4 @@
-import { getAccountWithTransactions } from '@/actions/accounts';
+import { getAccountWithTransactions } from '@/app/actions/accounts';
 import { notFound } from 'next/navigation';
 import React, { Suspense } from 'react'
 import TransactionTable from '../_components/transaction.table';

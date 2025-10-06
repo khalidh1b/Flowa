@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Switch } from './ui/switch';
 import { Button } from './ui/button';
 import useFetch from '@/hooks/use-fetch';
-import { createAccount } from '@/actions/dashboard';
+import { createAccount } from '@/app/actions/dashboard';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CURRENCIES } from '@/data/currencies.js';

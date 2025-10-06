@@ -1,8 +1,8 @@
-import { getUserAccounts } from '@/actions/dashboard'
+import { getUserAccounts } from '@/app/actions/dashboard'
 import { defaultCategories } from '@/data/categories';
 import React from 'react'
 import AddTransactionForm from '../_components/transaction-form';
-import { getTransaction } from '@/actions/transaction';
+import { getTransaction } from '@/app/actions/transaction';
 
 const AddTransactionPage = async ({ searchParams }) => {
   const accounts = await getUserAccounts();
