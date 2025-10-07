@@ -24,6 +24,7 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
     const searchParams = useSearchParams();
     const editId = searchParams.get("edit");
 
+    console.log('accounts', accounts);
     const {
         register,
         setValue,
@@ -68,9 +69,12 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
     const date = watch("date");
     const category = watch("category");
 
-    const onSubmit = async (data) => {
+    const onSubmit = async (data) => {        
+        const currency = accounts.find(ac => ac.id === data.accountId)?.currency || "USD";
+        
         const formData = {
             ...data,
+            currency,
             amount: parseFloat(data.amount),
         };
 
@@ -152,7 +156,7 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
                             <SelectContent>
                                 {accounts.map((account) => (
                                     <SelectItem key={account.id} value={account.id}>
-                                        {account.name} (₹{parseFloat(account.balance).toFixed(2)})
+                                        {account.name} ({account.currency} {parseFloat(account.balance).toFixed(2)})
                                     </SelectItem>
                                 ))}
                                 

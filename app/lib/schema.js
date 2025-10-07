@@ -16,10 +16,6 @@ export const accountSchema = z.object({
 
 export const transactionSchema = z.object({
     type: z.enum(["INCOME", "EXPENSE"]),
-    currency: z.string().refine(
-        val => currencyCodes.includes(val),
-        { message: 'Invalid currency code' }
-    ),
     amount: z.string().min(1, "Amount is required"),
     description: z.string().optional(),
     date: z.date({ required_error: "Date is required "}),
