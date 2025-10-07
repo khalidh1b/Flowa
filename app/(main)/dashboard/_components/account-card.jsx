@@ -8,6 +8,7 @@ import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 import Link from 'next/link';
 import React, { useEffect } from 'react'
 import { toast } from 'sonner';
+import { Loader } from 'lucide-react';
 
 const AccountCard = ({ account }) => {
     const { name, type, currency, balance, id, isDefault } = account;
@@ -27,7 +28,9 @@ const AccountCard = ({ account }) => {
 
     useEffect(() => {
         if (updatedAccount?.success) {
-            toast.success("Default account updated successfully!");
+            toast.success(
+                "Default account updated successfully! UI will reflect changes soon."
+            );
         }
     }, [updatedAccount, updateDefaultLoading]);
 
@@ -43,7 +46,7 @@ const AccountCard = ({ account }) => {
                 <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
                     <CardTitle className='text-sm font-medium capitalize'> {name} </CardTitle>
                     <div className='p-2'>
-                        {updateDefaultLoading ? <div className="flex gap-2 items-center"><Loader className="animate-spin w-8 h-8"/>Loading...</div> : <Switch checked={isDefault} onClick={handleDefaultChange} disabled={updateDefaultLoading} />}
+                        {updateDefaultLoading ? <Loader className="animate-spin w-8 h-8"/> : <Switch checked={isDefault} onClick={handleDefaultChange} disabled={updateDefaultLoading} />}
                     </div>
                 </CardHeader>
                 <CardContent>
