@@ -24,7 +24,7 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
     const searchParams = useSearchParams();
     const editId = searchParams.get("edit");
 
-    console.log('accounts', accounts);
+    // console.log('accounts', accounts);
     const {
         register,
         setValue,
@@ -96,19 +96,23 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
     const filteredCategories = categories.filter((category) => category.type === type);
 
     const handleScanComplete = (scannedData) => {
-        console.log('AI scanned trxn receipt data', scannedData);
+
+         if (!scannedData || Object.keys(scannedData).length === 0) {
+            toast.error("Couldn't detect any valid receipt information.");
+            return;
+            };
 
         if (scannedData) {
-            setValue("amount", scannedData.amount.toString());
-            setValue("date", new Date(scannedData.date));
+            setValue("amount", scannedData?.amount?.toString() || "");
+            setValue("date", new Date(scannedData.date) || "");
             if (scannedData.description) {
-                setValue("description", scannedData.description);
+                setValue("description", scannedData.description || "");
             }
             if (scannedData.category) {
-                setValue("category", scannedData.category);
+                setValue("category", scannedData.category || "");
             }
         }
-    };
+    };  
 
     return (
             <form className='space-y-6' onSubmit={handleSubmit(onSubmit)}>
