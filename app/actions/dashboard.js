@@ -95,14 +95,14 @@ export const getUserAccounts = async () => {
         throw new Error("Unauthorized");
     }
 
-    console.log('userId from clerk', userId);
+    // console.log('userId from clerk', userId);
     const user = await db.user.findUnique({
         where: {
             clerkUserId: userId
         },
     });
 
-    console.log('user in db', user);
+    // console.log('user in db', user);
     if (!user) {
         throw new Error("User not found");
     }
