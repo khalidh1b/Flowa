@@ -123,72 +123,60 @@ const calculateNextRecurringDate = (startDate, interval) => {
             break;
     }
 };
+
+
 // Scans a receipt image using Gemini AI and extracts structured transaction data.
 // Converts the uploaded file to base64, sends it to Gemini with a prompt for JSON extraction.
 // Parses the AI response and returns amount, date, description, merchant name, and category.
 // Handles errors for invalid responses or failed AI calls.
 // Returns an empty object if the image is not a receipt.
-export const scanReceipt = async (file) => {
-    try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+export const scanReceipt = async (base64String, mimeType) => {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-        // Convert File to ArrayBuffer
-        const arrayBuffer = await file.arrayBuffer();
+    const prompt = `
+        You are an expert at reading receipts from images.
+        Extract the following information from this image and return ONLY valid JSON.
 
-        // Convert ArrayBuffer to Base64
-        const base64String = Buffer.from(arrayBuffer).toString("base64");
-
-        const prompt = `
-        Analyze this receipt image and extract the following information in JSON format:
-      - Total amount (just the number)
-      - Date (in ISO format)
-      - Description or items purchased (brief summary)
-      - Merchant/store name
-      - Suggested category (one of: housing,transportation,groceries,utilities,entertainment,food,shopping,healthcare,education,personal,travel,insurance,gifts,bills,other-expense )
-      
-      Only respond with valid JSON in this exact format:
-      {
-        "amount": number,
-        "date": "ISO date string",
-        "description": "string",
-        "merchantName": "string",
-        "category": "string"
-      }
-
-      If its not a receipt, return an empty object`;
-
-        const result = await model.generateContent([
-            {
-                inlineData: {
-                    data: base64String,
-                    mimeType: file.type,
-                },
-            },
-            prompt,
-        ]);
-
-        const response = result.response;
-        const text = response.text();
-        const cleanedText = text.replace(/```(?:json)?\n?/g, "").trim();
-
-        try {
-            const data = JSON.parse(cleanedText);
-            return {
-                amount: parseFloat(data.amount),
-                date: new Date(data.date),
-                description: data.description,
-                category: data.category,
-                merchantName: data.merchantName,
-            };
-        } catch (parseError) {
-            console.error("Error parsing JSON response:", parseError);
-            throw new Error("Invalid response format from Gemini");
+        Required fields:
+        {
+        "amount": number,           // total amount
+        "date": "YYYY-MM-DD",       // in ISO date format
+        "description": "string",    // short summary of items
+        "merchantName": "string",   // store name
+        "category": "string"        // one of: housing, transportation, groceries, utilities, entertainment, food, shopping, healthcare, education, personal, travel, insurance, gifts, bills, other-expense
         }
-    } catch (error) {
-        console.error("Error scanning receipt:", error.message);
-        throw new Error("Failed to scan receipt");
-    }
-}
+
+        If uncertain, make your best guess.
+        If the image clearly is NOT a receipt, respond with {} ONLY.
+
+        Make sure your response is a single JSON object with no extra text or explanations.
+        `;
+
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          data: base64String,
+          mimeType
+        },
+      },
+      prompt,
+    ]);
+
+    const text = result?.response?.text?.();
+    console.log("Gemini raw text:", text);
+
+    if (!text) throw new Error("Empty response from Gemini");
+
+     const cleaned = text.replace(/```(?:json)?\n?/g, "").trim();
+
+    return JSON.parse(cleaned);
+  } catch (error) {
+    console.error("Error scanning receipt:", error);
+    throw new Error("Failed to scan receipt");
+  }
+};
+
 
 // Retrieves a single transaction for the authenticated user by its ID.
 // Checks user authentication and fetches user from the database.
