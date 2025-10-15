@@ -22,24 +22,55 @@ const ReceiptScanner = ({ onScanComplete }) => {
             return;
         }
 
-        await scanReceiptFn(file);
+        const base64String = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(",")[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        const mimeType = file.type;
+
+        await scanReceiptFn(base64String, mimeType);
     };
 
     useEffect(() => {
-        if (scannedData && !scanReceiptLoading) {
+        // console.log('useEffect scanned data', scannedData);
+        const hasDataBeenProcessed = scannedData !== undefined && scannedData !== null;
+
+        if (scannedData && !scanReceiptLoading && Object.keys(scannedData).length > 0) {
             onScanComplete(scannedData);
             toast.success("Receipt scanned successfully");
-        }
+        } else if (!scanReceiptLoading && hasDataBeenProcessed) {
+
+            toast.error(
+                `I apologize! I was unable to produce a response for your request. 
+                Quick Note: This application uses a free-tier AI model, which occasionally fails 
+                to return data due to rate limits or system load. Please try again🙏`, 
+                {
+                    duration: 8000,
+                    position: 'top-center'
+                }
+            );
+        };
     }, [scanReceiptLoading, scannedData]);
 
     return (
         <div>
-            <input type='file' ref={fileInputRef} className='hidden' accept='image/*' capture="environment" onChange={(e) => {
+            <input 
+                type='file' 
+                ref={fileInputRef} 
+                className='hidden' 
+                accept='image/*' 
+                capture="environment"
+                onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                     handleReceiptScan(file);
                 }
-            }} />
+                e.target.value = ''; 
+                }} 
+            />
             <Button type="button" variant="outline" className='w-full h-10 bg-gradient-to-br from-orange-500 via-pink-500 to-purple-500 animate-gradient hover:opacity-90 transition-opacity text-white hover:text-white' onClick={() => fileInputRef.current?.click()} > {scanReceiptLoading ? <>
                 <Loader2 className='mr-2 animate-spin' />
                 <span> Scanning Receipt... </span>
