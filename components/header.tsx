@@ -4,7 +4,7 @@ import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs';
 import { Button } from './ui/button';
 import { LayoutDashboard, PenBox } from 'lucide-react';
 import { checkUser } from '@/lib/checkUser';
-import { FlowaLogo } from '@/components/ui/flowa-logo.jsx'
+import { FlowaLogo } from '@/components/ui/flowa-logo'
 
 export const Header = async () => {
     await checkUser();

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CURRENCIES } from '@/data/currencies.js';
+import { CURRENCIES } from '@/data/currencies';
 
 const currencyCodes = CURRENCIES.map(c => c.code); 
 

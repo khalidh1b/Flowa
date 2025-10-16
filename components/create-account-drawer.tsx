@@ -13,7 +13,7 @@ import useFetch from '@/hooks/use-fetch';
 import { createAccount } from '@/app/actions/dashboard';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { CURRENCIES } from '@/data/currencies.js';
+import { CURRENCIES } from '@/data/currencies';
 
 const CreateAccountDrawer = ({ children }) => {
     const [open, setOpen] = useState(false);

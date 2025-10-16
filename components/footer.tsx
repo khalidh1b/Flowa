@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FlowaLogo } from '@/components/ui/flowa-logo.jsx';
+import { FlowaLogo } from '@/components/ui/flowa-logo';
 
 export const Footer = () => {
   return (
