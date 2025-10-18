@@ -10,12 +10,31 @@ import React, { useEffect } from 'react'
 import { toast } from 'sonner';
 import { Loader } from 'lucide-react';
 
-const AccountCard = ({ account }) => {
+interface Account {
+    id: string
+    name: string
+    type: string
+    currency: string
+    balance: number
+    isDefault: boolean
+};
+
+interface AccountCardProps {
+    account: Account
+};
+
+const AccountCard: React.FC<AccountCardProps> = ({ account }) => {
     const { name, type, currency, balance, id, isDefault } = account;
+    
+    interface UpdatedAccount {
+        success: boolean;
+    };
 
-    const { loading: updateDefaultLoading, fn: updateDefaultFn, data: updatedAccount, error } = useFetch(updateDefaultAccount);
+    const { loading: updateDefaultLoading, fn: updateDefaultFn, data, error } = useFetch(updateDefaultAccount);
+    const updatedAccount = data as UpdatedAccount | undefined;
 
-    const handleDefaultChange = async (event) => {
+    console.log('Account', account);
+    const handleDefaultChange = async (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
 
         if (isDefault) {
@@ -36,7 +55,8 @@ const AccountCard = ({ account }) => {
 
     useEffect(() => {
         if (error) {
-            toast.error(error.message || "Failed to update default account");
+            const err = error as Error;
+            toast.error(err.message || "Failed to update default account");
         }
     }, [error]);
 
@@ -46,12 +66,19 @@ const AccountCard = ({ account }) => {
                 <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
                     <CardTitle className='text-sm font-medium capitalize'> {name} </CardTitle>
                     <div className='p-2'>
-                        {updateDefaultLoading ? <Loader className="animate-spin w-8 h-8"/> : <Switch checked={isDefault} onClick={handleDefaultChange} disabled={updateDefaultLoading} />}
+                        {updateDefaultLoading 
+                        ? <Loader className="animate-spin w-8 h-8"/> 
+                        : <Switch 
+                            checked={!!isDefault} 
+                            onClick={handleDefaultChange} 
+                            disabled={!!updateDefaultLoading}
+                         />
+                        }
                     </div>
                 </CardHeader>
                 <CardContent>
                     <div className='text-2xl font-bold'>
-                        {currency} {parseFloat(balance).toFixed(2)}
+                        {currency} {balance.toFixed(2)}
                     </div>
                     <p className='text-xs text-muted-foreground'>
                         {type.charAt(0) + type.slice(1).toLowerCase()} Account

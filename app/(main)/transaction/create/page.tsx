@@ -1,13 +1,16 @@
 import { getUserAccounts } from '@/app/actions/dashboard'
 import { defaultCategories } from '@/data/categories';
-import React from 'react'
 import AddTransactionForm from '../_components/transaction-form';
+import type { ReactElement } from 'react';
 import { getTransaction } from '@/app/actions/transaction';
 
-const AddTransactionPage = async ({ searchParams }) => {
-  const accounts = await getUserAccounts();
+type SearchParams = { [key: string]: string | string[] | undefined };
 
-  const { edit } = await searchParams;
+const AddTransactionPage = async ({ searchParams }: { searchParams?: Promise<SearchParams> }): Promise<ReactElement> => {
+  const accounts = await getUserAccounts();
+  const params = await searchParams;
+  const editParam = params?.edit;
+  const edit = typeof editParam === 'string' ? editParam : Array.isArray(editParam) ? editParam[0] : undefined;
   const editId = edit;
 
   let initialData = null;
@@ -22,7 +25,7 @@ const AddTransactionPage = async ({ searchParams }) => {
         {editId ? "Edit" : "Add"} Transaction
       </h1>
 
-      <AddTransactionForm accounts={accounts} categories={defaultCategories} editMode={!!editId} initialData={initialData} />
+      <AddTransactionForm accounts={accounts} categories={defaultCategories as any} editMode={!!editId} initialData={initialData} />
     </div>
   )
 }

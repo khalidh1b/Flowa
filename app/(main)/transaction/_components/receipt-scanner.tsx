@@ -2,13 +2,18 @@
 
 import { scanReceipt } from '@/app/actions/transaction';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import useFetch from '@/hooks/use-fetch';
 import { Camera, Loader2 } from 'lucide-react';
 import React, { useEffect, useRef } from 'react'
 import { toast } from 'sonner';
 
-const ReceiptScanner = ({ onScanComplete }) => {
-    const fileInputRef = useRef();
+interface ReceiptScannerProps {
+    onScanComplete: (data: any) => void;
+}
+
+const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onScanComplete }) => {
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const {
         loading: scanReceiptLoading,
@@ -16,16 +21,27 @@ const ReceiptScanner = ({ onScanComplete }) => {
         data: scannedData,
     } = useFetch(scanReceipt);
 
-    const handleReceiptScan = async (file) => {
+    const handleReceiptScan = async (file: File) => {
         if (file.size > 5 * 1024 * 1024) {
             toast.error("File size should be less than 5MB");
             return;
         }
 
-        const base64String = await new Promise((resolve, reject) => {
+        const base64String = await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = () => resolve(reader.result.split(",")[1]);
-            reader.onerror = reject;
+            reader.onload = () => {
+                const result = reader.result;
+                if (result == null) {
+                    reject(new Error('Failed to read file: result is null'));
+                    return;
+                }
+                if (typeof result === 'string') {
+                    resolve(result.split(",")[1]);
+                } else {
+                    reject(new Error('Failed to read file: unexpected result type'));
+                }
+            };
+            reader.onerror = () => reject(new Error('Failed to read file'));
             reader.readAsDataURL(file);
         });
 
@@ -35,7 +51,7 @@ const ReceiptScanner = ({ onScanComplete }) => {
     };
 
     useEffect(() => {
-        // console.log('useEffect scanned data', scannedData);
+        console.log('useEffect scanned data', scannedData);
         const hasDataBeenProcessed = scannedData !== undefined && scannedData !== null;
 
         if (scannedData && !scanReceiptLoading && Object.keys(scannedData).length > 0) {
@@ -53,11 +69,11 @@ const ReceiptScanner = ({ onScanComplete }) => {
                 }
             );
         };
-    }, [scanReceiptLoading, scannedData]);
+    }, [scanReceiptLoading, scannedData, onScanComplete]);
 
     return (
         <div>
-            <input 
+            <Input
                 type='file' 
                 ref={fileInputRef} 
                 className='hidden' 

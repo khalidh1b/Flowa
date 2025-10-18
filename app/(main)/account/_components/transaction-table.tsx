@@ -18,6 +18,8 @@ import React, { useState, useMemo, useEffect } from 'react'
 import { toast } from 'sonner';
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext, PaginationLink } from '@/components/ui/pagination';
 import { Loader } from 'lucide-react';
+import { CheckedState } from '@radix-ui/react-checkbox';
+import type { Transaction } from '@/app/lib/types';
 
 const RECURRING_INTERVALS = {
     DAILY: "Daily",
@@ -26,9 +28,15 @@ const RECURRING_INTERVALS = {
     YEARLY: "Yearly"
 };
 
-const TransactionTable = ({ transactions }) => {
+type RecurringInterval = keyof typeof RECURRING_INTERVALS;
+
+interface TransactionTableProps {
+    transactions: Transaction[];
+}
+
+const TransactionTable: React.FC<TransactionTableProps> = ({ transactions }) => {
     const router = useRouter();
-    const [selectedIds, setSelectedIds] = useState([]);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [sortConfig, setSortConfig] = useState({
         field: "date",
         direction: "desc",
@@ -46,6 +54,7 @@ const TransactionTable = ({ transactions }) => {
         data: deleted,
     } = useFetch(bulkDeleteTransaction);
 
+    console.log('transactions:', transactions);
     // Memoized computation for filtering and sorting transactions
     const filteredAndSortedTransactions = useMemo(() => {
         let result = [...transactions];
@@ -78,7 +87,7 @@ const TransactionTable = ({ transactions }) => {
             switch (sortConfig.field) {
                 case "date":
                     // Sort by date
-                    comparison = new Date(a.date) - new Date(b.date);
+                    comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
                     break;
                 case "amount":
                     // Sort by amount
@@ -106,7 +115,7 @@ const TransactionTable = ({ transactions }) => {
     ]);
 
     // Handle sorting by field and toggle direction
-    const handleSort = (field) => {
+    const handleSort = (field: "date" | "amount" | "category") => {
         setSortConfig(current => ({
             field,
             direction: current.field == field && current.direction === 'asc' ? 'desc' : 'asc',
@@ -114,14 +123,19 @@ const TransactionTable = ({ transactions }) => {
     }
 
     // Select or deselect a transaction by id
-    const handleSelect = (id) => {
+    // const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const handleSelect = (id: string) => {
         setSelectedIds((current) => current.includes(id) ? current.filter(item => item != id) : [...current, id]);
     }
 
     // Select or deselect all transactions
-    const handleSelectAll = (id) => {
-        setSelectedIds((current) => current.length === filteredAndSortedTransactions.length ? [] : filteredAndSortedTransactions.map(t => t.id));
-    }
+    const handleSelectAll = (id: CheckedState) => {
+        if (id === true) {
+            setSelectedIds(filteredAndSortedTransactions.map(t => t.id));
+        } else {
+            setSelectedIds([]);
+        }
+    };
 
     // Bulk delete selected transactions
     const handleBulkDelete = async () => {
@@ -150,7 +164,8 @@ const TransactionTable = ({ transactions }) => {
     };
 
     // Change page number for pagination
-    const handlePageSelection = (selectedPage) => {
+    const handlePageSelection = (selectedPage: number) => {
+        console.log("selectedPage", typeof selectedPage);
         if (selectedPage >= 1 && selectedPage <= Math.ceil(filteredAndSortedTransactions.length / 25) && selectedPage !== pageNumber) {
             setPageNumber(selectedPage);
         }
@@ -270,7 +285,7 @@ const TransactionTable = ({ transactions }) => {
                             filteredAndSortedTransactions.slice(pageNumber * 20 - 20, pageNumber * 20).map((transaction) => (
                                 <TableRow key={transaction.id}>
                                     <TableCell>
-                                        <Checkbox onCheckedChange={() => handleSelect(transaction.id)} checked={selectedIds.includes(transaction.id)} />
+                                        <Checkbox onCheckedChange={(checked) => handleSelect(transaction.id)} checked={selectedIds.includes(transaction.id)} />
                                     </TableCell>
                                     <TableCell>
                                         {format(new Date(transaction.date), "PP")}
@@ -298,7 +313,7 @@ const TransactionTable = ({ transactions }) => {
                                                     <TooltipTrigger>
                                                         <Badge variant='outline' className='gap-1 bg-purple-100 text-purple-700 hover:bg-purple-200'>
                                                             <RefreshCw className='h-3 w-3' />
-                                                            {RECURRING_INTERVALS[transaction.recurringInterval]}
+                                                            {RECURRING_INTERVALS[transaction.recurringInterval as keyof typeof RECURRING_INTERVALS]}
                                                         </Badge>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
@@ -307,7 +322,7 @@ const TransactionTable = ({ transactions }) => {
                                                                 Next Date:
                                                             </div>
                                                             <div>
-                                                                {format(new Date(transaction.nextRecurringDate), "PP")}
+                                                                {transaction.nextRecurringDate ? format(new Date(transaction.nextRecurringDate), "PP") : "-"}
                                                             </div>
                                                         </div>
                                                     </TooltipContent>

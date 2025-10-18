@@ -7,6 +7,12 @@ const nextConfig = {
                 hostname: "randomuser.me",
             },
         ],
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'res.cloudinary.com'
+            }
+        ],
     },
 
     experimental: {

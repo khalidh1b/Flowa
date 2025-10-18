@@ -14,12 +14,41 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import ReceiptScanner from './receipt-scanner';
+import type { z } from 'zod';
 
-const AddTransactionForm = ({ accounts, categories, editMode = false, initialData = null, }) => {
+type TransactionFormValues = z.infer<typeof transactionSchema>;
+
+type Account = {
+    id: string;
+    name: string;
+    currency: string;
+    balance: string | number;
+    isDefault?: boolean;
+}
+
+type Category = {
+    id: string;
+    name: string;
+    type: "INCOME" | "EXPENSE";
+}
+
+type TransactionResult = {
+    success?: boolean;
+    data?: { accountId?: string } | null;
+}
+
+interface AddTransactionFormProps {
+    accounts: Account[];
+    categories: Category[];
+    editMode?: boolean;
+    initialData?: Partial<TransactionFormValues & { amount?: number }> | null;
+}
+
+const AddTransactionForm: React.FC<AddTransactionFormProps> = ({ accounts, categories, editMode = false, initialData = null, }) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const editId = searchParams.get("edit");
@@ -37,13 +66,13 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
         resolver: zodResolver(transactionSchema),
         defaultValues:
             editMode && initialData ? {
-                type: initialData.type,
-                amount: initialData.amount.toString(),
-                description: initialData.description,
-                accountId: initialData.accountId,
-                category: initialData.category,
-                date: new Date(initialData.date),
-                isRecurring: initialData.isRecurring,
+                type: (initialData.type as TransactionFormValues['type']) ?? "EXPENSE",
+                amount: (initialData.amount !== undefined ? String(initialData.amount) : ""),
+                description: initialData.description ?? undefined,
+                accountId: initialData.accountId ?? accounts.find((ac) => ac.isDefault)?.id ?? "",
+                category: initialData.category ?? "",
+                date: initialData.date ? new Date(initialData.date as any) : new Date(),
+                isRecurring: initialData.isRecurring ?? false,
                 ...(initialData.recurringInterval && {
                     recurringInterval: initialData.recurringInterval,
                 }),
@@ -52,26 +81,26 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
                     type: "EXPENSE",
                     amount: "",
                     description: "",
-                    accountId: accounts.find((ac) => ac.isDefault)?.id,
+                    accountId: accounts.find((ac) => ac.isDefault)?.id ?? "",
                     date: new Date(),
                     isRecurring: false,
-                },
+                } as TransactionFormValues,
     });
 
     const {
         loading: transactionLoading,
         fn: transactionFn,
         data: transactionResult,
-    } = useFetch(editMode ? updateTransaction : createTransaction);
+    }: { loading: boolean | null; fn: (...args: any[]) => Promise<void>; data: TransactionResult | undefined } = useFetch(editMode ? updateTransaction : createTransaction);
 
     const type = watch("type");
     const isRecurring = watch("isRecurring");
     const date = watch("date");
     const category = watch("category");
 
-    const onSubmit = async (data) => {        
-        const currency = accounts.find(ac => ac.id === data.accountId)?.currency || "USD";
-        
+    const onSubmit = async (data: TransactionFormValues) => {
+        const currency = accounts.find((ac: Account) => ac.id === data.accountId)?.currency || "USD";
+
         const formData = {
             ...data,
             currency,
@@ -79,32 +108,32 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
         };
 
         if (editMode) {
-            transactionFn(editId, formData);
+            await transactionFn(editId, formData);
         } else {
-            transactionFn(formData);
+            await transactionFn(formData);
         }
     };
 
     useEffect(() => {
-        if (transactionResult?.success && !transactionLoading) {
+        if (transactionResult && (transactionResult as TransactionResult).success && !transactionLoading) {
             toast.success(editMode ? "Transaction updated successfully" : "Transaction created successfully");
             reset();
-            router.push(`/account/${transactionResult.data.accountId}`);
+            const acctId = (transactionResult as TransactionResult).data?.accountId;
+            if (acctId) router.push(`/account/${acctId}`);
         }
-    }, [transactionResult, transactionLoading, editMode]);
+    }, [transactionResult, transactionLoading, editMode, reset, router]);
 
-    const filteredCategories = categories.filter((category) => category.type === type);
+    const filteredCategories = categories.filter((category: Category) => category.type === type);
 
-    const handleScanComplete = (scannedData) => {
-
-         if (!scannedData || Object.keys(scannedData).length === 0) {
+    const handleScanComplete = useCallback((scannedData: Record<string, any> | null) => {
+        if (!scannedData || Object.keys(scannedData).length === 0) {
             toast.error("Couldn't detect any valid receipt information.");
             return;
-            };
-
+        };
+        
         if (scannedData) {
             setValue("amount", scannedData?.amount?.toString() || "");
-            setValue("date", new Date(scannedData.date) || "");
+            if (scannedData.date) setValue("date", new Date(scannedData.date));
             if (scannedData.description) {
                 setValue("description", scannedData.description || "");
             }
@@ -112,7 +141,7 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
                 setValue("category", scannedData.category || "");
             }
         }
-    };  
+    }, [setValue]);
 
     return (
             <form className='space-y-6' onSubmit={handleSubmit(onSubmit)}>
@@ -120,7 +149,7 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
 
                 <div className='space-y-2'>
                     <label className='text-sm font-medium'> Type </label>
-                    <Select onValueChange={(value) => setValue("type", value)} defaultValue={type}>
+                    <Select onValueChange={(value: "INCOME" | "EXPENSE") => setValue("type", value)} defaultValue={type as "INCOME" | "EXPENSE"}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select type" />
                         </SelectTrigger>
@@ -158,16 +187,18 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
                                 <SelectValue placeholder="Select account" />
                             </SelectTrigger>
                             <SelectContent>
-                                {accounts.map((account) => (
+                                {accounts.map((account: Account) => (
                                     <SelectItem key={account.id} value={account.id}>
-                                        {account.name} ({account.currency} {parseFloat(account.balance).toFixed(2)})
+                                        {account.name} ({account.currency} {parseFloat(String(account.balance)).toFixed(2)})
                                     </SelectItem>
                                 ))}
-                                
-                                <CreateAccountDrawer asChild> 
-                                    <Button className="w-full select-none items-center text-sm outline-none" variant="ghost">
+
+                                {/* Render a simple button that opens the CreateAccountDrawer */}
+                                <CreateAccountDrawer
+                                >
+                                    <div className="w-full select-none items-center text-sm outline-none ghost">
                                         Create Account
-                                    </Button>
+                                    </div>
                                 </CreateAccountDrawer>
                             </SelectContent>
                         </Select>
@@ -208,12 +239,14 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
                             </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar 
-                                mode="single" 
-                                selected={date} 
-                                onSelect={(date) => setValue("date", date)} 
-                                disabled={(date) => date > new Date() || date < new Date("1900-01-01")} 
-                                initialFocus 
+                            <Calendar
+                                className="p-2"
+                                classNames={{}}
+                                mode="single"
+                                selected={date as Date}
+                                onSelect={(d: Date | undefined) => d && setValue("date", d)}
+                                disabled={(d: Date) => d > new Date() || d < new Date("1900-01-01")}
+                                initialFocus={true}
                             />
                         </PopoverContent>
                     </Popover>
@@ -244,7 +277,7 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
                 {isRecurring && (
                     <div className='space-y-2'>
                         <label className='text-sm font-medium'> Recurring Interval </label>
-                        <Select onValueChange={(value) => setValue("recurringInterval", value)} defaultValue={getValues("recurringInterval")}>
+                        <Select onValueChange={(value: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY") => setValue("recurringInterval", value)} defaultValue={getValues("recurringInterval") as any}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select Interval" />
                             </SelectTrigger>
@@ -264,7 +297,7 @@ const AddTransactionForm = ({ accounts, categories, editMode = false, initialDat
 
                 <div className='flex gap-4'>
                     <Button type="button" variant="outline" className="w-full" onClick={() => router.back()} > Cancel </Button>
-                    <Button type="submit" className="w-full" disabled={transactionLoading}> 
+                    <Button type="submit" className="w-full" disabled={Boolean(transactionLoading)}> 
                         {transactionLoading ? (
                             <>
                                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />

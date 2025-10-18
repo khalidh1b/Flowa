@@ -8,6 +8,15 @@ import { getCurrentBudget } from '@/app/actions/budget';
 import BudgetProgress from './_components/budget-progress';
 import DashboardOverview from './_components/transaction-overview';
 
+interface Account {
+  id: string;
+  name: string;
+  isDefault: boolean;
+  balance: number
+  type: string
+  currency: string
+};
+
 const DashboardPage = async () => {
     const accounts = await getUserAccounts();
 
@@ -25,16 +34,25 @@ const DashboardPage = async () => {
     return (
         <div className='space-y-8'>
             
-            {defaultAccount && (
+            {defaultAccount && budgetData?.budget && (
                 <BudgetProgress
-                    initialBudget={budgetData?.budget}
+                    initialBudget={budgetData.budget}
                     currentExpenses={budgetData?.currentExpenses || 0}
                     currency={defaultAccount.currency}
                 />
             )}
 
             <Suspense fallback={"Loading Overview..."}>
-                <DashboardOverview accounts={accounts} transactions={transactions || []} />
+                <DashboardOverview accounts={accounts} transactions={transactions?.map(t => ({
+                    id: t.id,
+                    accountId: t.accountId,
+                    amount: typeof t.amount === 'number' ? t.amount : t.amount?.toNumber() || 0,
+                    date: t.date,
+                    type: t.type,
+                    category: t.category,
+                    currency: t.currency,
+                    description: t.description
+                })) || []} />
             </Suspense>
 
             <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
@@ -47,7 +65,12 @@ const DashboardPage = async () => {
                     </Card>
                 </CreateAccountDrawer>
 
-                {accounts.length > 0 && accounts?.map((account) => {
+                {accounts.length > 0 && accounts?.map((accountFromAPI) => {
+                    const account: Account = 
+                     {
+                        ...accountFromAPI,
+                        balance: Number(accountFromAPI.balance)
+                    }
                     return <AccountCard key={account.id} account={account} />
                 })}
             </div>

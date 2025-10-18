@@ -1,19 +1,40 @@
 import { getAccountWithTransactions } from '@/app/actions/accounts';
 import { notFound } from 'next/navigation';
 import React, { Suspense } from 'react'
-import TransactionTable from '../_components/transaction.table';
+import type { Account as AccountType, Transaction as TransactionType } from '@/app/lib/types';
+import TransactionTable from '../_components/transaction-table';
 import AccountChart from '../_components/account-chart';
 import { Loader } from 'lucide-react';
 
-const AccountsPage = async ({ params }) => {
-    const { id } = await params;
-    const accountData = await getAccountWithTransactions(id);
+type Transaction = {
+    id: string;
+    date: string;
+    amount: number;
+    type: 'INCOME' | 'EXPENSE';
+    accountId: string;
+}
+
+type Account = {
+    id: string;
+    name: string;
+    type: string;
+    currency: string;
+    balance: number | string;
+    _count?: { transaction: number };
+}
+
+const AccountsPage = async (props: { params?: Promise<{ id: string }> }) => {
+    // normalize possibly-thenable params at runtime
+    const params = await Promise.resolve(props.params as Promise<{ id: string }> | undefined);
+    const { id } = params as { id: string };
+
+    const accountData = await getAccountWithTransactions(id) as { transactions: Transaction[] } & Account | null;
 
     if (!accountData) {
         notFound();
     }
 
-    const { transactions, ...account } = accountData;
+    const { transactions, ...account } = (accountData as unknown) as { transactions: TransactionType[] } & AccountType;
 
     return (
         <div className='space-y-8 px-5'>
@@ -24,8 +45,8 @@ const AccountsPage = async ({ params }) => {
                 </div>
 
                 <div className='text-right pb-2'>
-                    <div className='text-xl sm:text-2xl font-bold'> {account.currency} {parseFloat(account.balance).toFixed(2)} </div>
-                    <p className='text-sm text-muted-foreground'> {account._count.transaction} Transactions </p>
+                    <div className='text-xl sm:text-2xl font-bold'> {account.currency} {parseFloat(String(account.balance)).toFixed(2)} </div>
+                    <p className='text-sm text-muted-foreground'> {account._count?.transaction ?? 0} Transactions </p>
                 </div>
             </div>
 

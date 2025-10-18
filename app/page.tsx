@@ -5,7 +5,6 @@ import { AIShowcaseSection } from "@/components/ai-showcase-section";
 import { InsightsSection } from "@/components/insights-section";
 import { SecuritySection } from "@/components/security-section";
 
-
 export default function Home() {
   return (
     <div>

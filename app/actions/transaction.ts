@@ -6,15 +6,17 @@ import { categories, request } from "@arcjet/next";
 import { auth } from "@clerk/nextjs/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { revalidatePath } from "next/cache";
+import { RecurringInterval } from "@/app/lib/types";
+import { Prisma } from "@prisma/client";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-const serializeAmount = (obj) => ({
+const serializeAmount = (obj: any) => ({
     ...obj,
     amount: obj.amount.toNumber(),
 });
 // Create a new transaction and update account balance atomically
-export const createTransaction = async (data) => {
+export const createTransaction = async (data: any): Promise<{ success: boolean; data: any }> => {
     try {
         const { userId } = await auth();
         if (!userId) {
@@ -100,12 +102,12 @@ export const createTransaction = async (data) => {
 
         return { success: true, data: serializeAmount(transaction) };
     } catch (error) {
-        throw new Error(error.message);
+        throw new Error(error instanceof Error ? error.message : 'An error occurred');
     }
 }
 
 // Helper function to calculate next recurring date 
-const calculateNextRecurringDate = (startDate, interval) => {
+const calculateNextRecurringDate = (startDate: Date | string, interval: RecurringInterval): Date => {
     const date = new Date(startDate);
 
     switch (interval) {
@@ -116,12 +118,14 @@ const calculateNextRecurringDate = (startDate, interval) => {
             date.setDate(date.getDate() + 7);
             break;
         case "MONTHLY":
-            date.setDate(date.getMonth() + 1);
+            date.setMonth(date.getMonth() + 1);
             break;
         case "YEARLY":
-            date.setDate(date.getFullYear() + 1);
+            date.setFullYear(date.getFullYear() + 1);
             break;
     }
+    
+    return date;
 };
 
 
@@ -130,7 +134,7 @@ const calculateNextRecurringDate = (startDate, interval) => {
 // Parses the AI response and returns amount, date, description, merchant name, and category.
 // Handles errors for invalid responses or failed AI calls.
 // Returns an empty object if the image is not a receipt.
-export const scanReceipt = async (base64String, mimeType) => {
+export const scanReceipt = async (base64String: string, mimeType: string): Promise<any> => {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
@@ -183,7 +187,7 @@ export const scanReceipt = async (base64String, mimeType) => {
 // Finds the transaction belonging to the user and returns it with the amount serialized.
 // Throws errors if the user or transaction is not found.
 // Used for displaying transaction details in the UI.
-export const getTransaction = async (id) => {
+export const getTransaction = async (id: string): Promise<any> => {
     const { userId } = await auth();
     if (!userId) {
         throw new Error("Unauthorized");
@@ -211,7 +215,7 @@ export const getTransaction = async (id) => {
     return serializeAmount(transaction);
 }
 
-export const updateTransaction = async (id, data) => {
+export const updateTransaction = async (id: string, data: any): Promise<{ success: boolean; data: any }> => {
     try {
         const { userId } = await auth();
         if (!userId) {
@@ -281,6 +285,6 @@ export const updateTransaction = async (id, data) => {
 
         return { success: true, data: serializeAmount(transaction) };
     } catch (error) {
-        throw new Error(error.message);
+        throw new Error(error instanceof Error ? error.message : 'An error occurred');
     }
 }

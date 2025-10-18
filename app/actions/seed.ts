@@ -1,5 +1,6 @@
 import { db } from "@/lib/prisma";
 import { subDays } from "date-fns";
+import { TransactionType, TransactionStatus } from "@prisma/client";
 
 const ACCOUNT_ID = "70baa0f3-7c60-4fd7-b966-f3fc26802fc3";
 const USER_ID = "9218b355-281d-4a34-babf-f312ad5784f3";
@@ -27,12 +28,12 @@ const CATEGORIES = {
 };
 
 // Helper to generate random amount within a range
-function getRandomAmount(min, max) {
+function getRandomAmount(min: number, max: number): number {
   return Number((Math.random() * (max - min) + min).toFixed(2));
 }
 
 // Helper to get random category with amount
-function getRandomCategory(type) {
+function getRandomCategory(type: "INCOME" | "EXPENSE") {
   const categories = CATEGORIES[type];
   const category = categories[Math.floor(Math.random() * categories.length)];
   const amount = getRandomAmount(category.range[0], category.range[1]);
@@ -42,7 +43,19 @@ function getRandomCategory(type) {
 export async function seedTransactions() {
   try {
     // Generate 90 days of transactions
-    const transactions = [];
+    const transactions: Array<{
+      id: string;
+      type: TransactionType;
+      amount: number;
+      description: string;
+      date: Date;
+      category: string;
+      status: TransactionStatus;
+      userId: string;
+      accountId: string;
+      createdAt: Date;
+      updatedAt: Date;
+    }> = [];
     let totalBalance = 0;
 
     for (let i = 90; i >= 0; i--) {
@@ -53,26 +66,26 @@ export async function seedTransactions() {
 
       for (let j = 0; j < transactionsPerDay; j++) {
         // 40% chance of income, 60% chance of expense
-        const type = Math.random() < 0.4 ? "INCOME" : "EXPENSE";
-        const { category, amount } = getRandomCategory(type);
+        const type = Math.random() < 0.4 ? TransactionType.INCOME : TransactionType.EXPENSE;
+        const { category, amount } = getRandomCategory(type as "INCOME" | "EXPENSE");
 
         const transaction = {
           id: crypto.randomUUID(),
           type,
           amount,
           description: `${
-            type === "INCOME" ? "Received" : "Paid for"
+            type === TransactionType.INCOME ? "Received" : "Paid for"
           } ${category}`,
           date,
           category,
-          status: "COMPLETED",
+          status: TransactionStatus.COMPLETED,
           userId: USER_ID,
           accountId: ACCOUNT_ID,
           createdAt: date,
           updatedAt: date,
         };
 
-        totalBalance += type === "INCOME" ? amount : -amount;
+        totalBalance += type === TransactionType.INCOME ? amount : -amount;
         transactions.push(transaction);
       }
     }
@@ -102,6 +115,7 @@ export async function seedTransactions() {
     };
   } catch (error) {
     console.error("Error seeding transactions:", error);
-    return { success: false, error: error.message };
+    const err = error as Error;
+    return { success: false, error: err.message };
   }
 }

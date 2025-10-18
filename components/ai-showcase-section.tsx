@@ -1,4 +1,5 @@
 import { Scan, Brain, Zap } from "lucide-react"
+import Image from "next/image";
 
 export const AIShowcaseSection = () => {
   return (
@@ -26,10 +27,12 @@ export const AIShowcaseSection = () => {
           <div className="relative">
             <div className="relative aspect-[16/10] rounded-2xl overflow-hidden border border-border/50 shadow-2xl bg-gradient-to-br from-primary/5 via-background to-accent/5">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(120,119,198,0.1),rgba(255,255,255,0))]" />
-              <img
+              <Image
                 src="https://res.cloudinary.com/dksiicemx/image/upload/v1759771476/financial-dashboard_zfdadk.png"
                 alt="AI-powered receipt scanning"
                 className="w-full h-full object-cover opacity-90"
+                width={100}
+                height={100}
               />
             </div>
 

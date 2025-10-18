@@ -14,11 +14,20 @@ import { createAccount } from '@/app/actions/dashboard';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { CURRENCIES } from '@/data/currencies';
+import { z } from 'zod';
 
-const CreateAccountDrawer = ({ children }) => {
+type AccountFormData = z.infer<typeof accountSchema>;
+
+type CurrencyCode = "USD" | "EUR" | "JPY" | "GBP" | "AUD" | "CAD" | "CHF" | "CNY" | "HKD" | "NZD" | "SEK" | "KRW" | "SGD" | "NOK" | "MXN" | "INR" | "RUB" | "ZAR" | "TRY" | "BRL" | "TWD" | "DKK" | "PLN" | "THB" | "IDR" | "HUF" | "CZK" | "ILS" | "CLP" | "PHP" | "AED" | "COP" | "SAR" | "MYR" | "RON" | "NGN" | "BDT" | "PKR" | "EGP" | "KWD" | "QAR" | "LKR" | "DZD" | "MAD" | "VND" | "UAH" | "KZT" | "BHD" | "OMR" | "JOD" | "IRR" | "IQD" | "XOF" | "XAF" | "GHS" | "TZS" | "KES" | "UGX" | "AFN" | "NPR" | "MMK" | "ETB" | "MZN" | "BWP" | "ZMW" | "AOA" | "XCD" | "BBD" | "BZD" | "BND" | "FJD" | "WST" | "PGK" | "MUR" | "SCR" | "MVR" | "LAK" | "KGS" | "MDL" | "MKD" | "ISK" | "BAM" | "ALL" | "RSD" | "GEL" | "TJS" | "UZS" | "MNT" | "SYP" | "SDG" | "LYD" | "YER" | "MWK" | "GNF" | "LSL" | "SZL" | "SSP" | "HTG" | "SLL" | "MGA" | "CUP" | "BSD" | "SRD" | "TTD" | "JMD" | "DOP" | "PEN" | "BOB" | "PYG" | "UYU" | "VES" | "XPF" | "XDR";
+
+interface CreateAccountDrawerProps {
+    children: React.ReactNode;
+}
+
+const CreateAccountDrawer = ({ children }: CreateAccountDrawerProps) => {
     const [open, setOpen] = useState(false);
 
-    const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm({
+    const { register, handleSubmit, formState: { errors }, setValue, watch, reset } = useForm<AccountFormData>({
         resolver: zodResolver(accountSchema),
         defaultValues: {
             name: "",
@@ -37,16 +46,20 @@ const CreateAccountDrawer = ({ children }) => {
             reset();
             setOpen(false);
         }
-    }, [createAccountLoading, newAccount]);
+    }, [createAccountLoading, newAccount, reset]);
 
     useEffect(() => {
         if (error) {
-            toast.error(error.message || "Failed to create an account");
+            const err = error as Error;
+            toast.error(err.message || "Failed to create an account");
         }
     }, [error]);
 
-    const onSubmit = async (data) => {
-        await createAccountFn(data);
+    const onSubmit = async (data: AccountFormData) => {
+        await createAccountFn({
+            ...data,
+            currency: data.currency as CurrencyCode
+        });
     };
 
     return (
@@ -68,7 +81,7 @@ const CreateAccountDrawer = ({ children }) => {
 
                         <div className='space-y-2'>
                             <label htmlFor='type' className='text-sm font-medium'> Account Type </label>
-                            <Select onValueChange={(value) => setValue("type", value)} defaultValue={watch("type")}>
+                            <Select onValueChange={(value) => setValue("type", value as "CURRENT" | "SAVINGS")} defaultValue={watch("type")}>
                                 <SelectTrigger id="type">
                                     <SelectValue placeholder="Select Type" />
                                 </SelectTrigger>
@@ -96,8 +109,8 @@ const CreateAccountDrawer = ({ children }) => {
                                     ))}
                                 </SelectContent>
                             </Select>
-                            {errors.type && (
-                                <p className='text-sm text-red-500'> {errors.type.message} </p>
+                            {errors.currency && (
+                                <p className='text-sm text-red-500'> {errors.currency.message} </p>
                             )}
                         </div>
 
@@ -124,7 +137,7 @@ const CreateAccountDrawer = ({ children }) => {
                                 <Button type="button" variant="outline" className="flex-1"> Cancel </Button>
                             </DrawerClose>
 
-                            <Button type="submit" className="flex-1" disabled={createAccountLoading}> {createAccountLoading ?
+                            <Button type="submit" className="flex-1" disabled={!!createAccountLoading}> {createAccountLoading ?
                                 (<> <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Creating... </>) : ("Create Account")} </Button>
                         </div>
                     </form>

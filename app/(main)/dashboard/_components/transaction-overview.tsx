@@ -18,7 +18,29 @@ const COLORS = [
     "#9FA8DA",
 ];
 
-const DashboardOverview = ({ accounts, transactions }) => {
+interface Account {
+  id: string
+  name: string
+  isDefault: boolean
+};
+
+interface Transaction {
+  id: string
+  accountId: string
+  amount: number
+  date: string
+  type: string
+  category: string
+  currency: string
+  description?: string
+}
+
+interface DashboardOverviewProps {
+  accounts: Account[]
+  transactions: Transaction[]
+}
+
+const DashboardOverview: React.FC<DashboardOverviewProps> = ({ accounts, transactions }) => {
     const [selectedAccountId, setSelectedAccountId] = useState(
         accounts.find((a) => a.isDefault)?.id || accounts[0]?.id
     );
@@ -29,7 +51,8 @@ const DashboardOverview = ({ accounts, transactions }) => {
     );
 
     console.log('account transactions', accountTransactions);
-    const recentTransactions = accountTransactions.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 5);
+    const recentTransactions = accountTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    ).slice(0, 5);
 
     console.log(recentTransactions);
     // Calculate expense breakdown for current month
@@ -44,7 +67,7 @@ const DashboardOverview = ({ accounts, transactions }) => {
     });
 
     // Group expenses by category
-    const expensesByCategory = currentMonthExpenses.reduce((acc, transaction) => {
+    const expensesByCategory = currentMonthExpenses.reduce<Record<string, number>> ((acc, transaction) => {
         const category = transaction.category;
         if (!acc[category]) {
             acc[category] = 0;

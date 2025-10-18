@@ -1,4 +1,4 @@
-import { currentUser } from "@clerk/nextjs/server"
+import { currentUser } from "@clerk/nextjs/server";
 import { db } from "./prisma";
 
 export const checkUser = async () => {
@@ -33,6 +33,6 @@ export const checkUser = async () => {
 
         return newUser;
     } catch (error) {
-        console.log(error.message);
+        console.log(error instanceof Error ? error.message : String(error));
     }
 }

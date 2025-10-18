@@ -4,21 +4,50 @@ import { db } from "@/lib/prisma";
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
 
-const serializeTransaction = (obj) => {
-    const serialized = { ...obj };
+interface Transaction {
+  balance?: { toNumber: () => number } | number;
+  amount?: { toNumber: () => number } | number;
+  [key: string]: any;
+}
 
-    if (obj.balance) {
+interface Account {
+  balance?: { toNumber: () => number } | number;
+  [key: string]: any;
+}
+
+const serializeTransaction = (obj: Transaction): Transaction => {
+    const serialized: Transaction = { ...obj };
+
+    if (obj.balance && typeof obj.balance !== "number") {
         serialized.balance = obj.balance.toNumber();
     }
 
-    if (obj.amount) {
+    if (obj.amount && typeof obj.amount !== "number") {
         serialized.amount = obj.amount.toNumber();
     }
 
     return serialized;
 };
 
-export const createAccount = async (data) => {
+const serializeAccount = (obj: Account): Account => {
+    const serialized: Account = { ...obj };
+
+    if (obj.balance && typeof obj.balance !== "number") {
+        serialized.balance = obj.balance.toNumber();
+    }
+
+    return serialized;
+};
+
+interface CreateAccountData {
+  name: string
+  type: 'CURRENT' | 'SAVINGS'
+  balance: string
+  currency: keyof typeof import('@prisma/client').Currencies
+  isDefault?: boolean
+}
+
+export const createAccount = async (data: CreateAccountData) => {
     try {
         const { userId } = await auth();
         if (!userId) {
@@ -74,7 +103,7 @@ export const createAccount = async (data) => {
         
 
         // NextJS doesn't allow float values so we are converting it to a number.
-        const serializedAccount = serializeTransaction(account);
+        const serializedAccount = serializeAccount(account);
 
         revalidatePath("/dashboard");
         return {
@@ -82,14 +111,27 @@ export const createAccount = async (data) => {
             data: serializedAccount
         };
     } catch (error) {
-        throw new Error(error.message);
+        const err = error as Error;
+        throw new Error(err.message);
     }
 }
 
 // Fetches all accounts for the authenticated user, ordered by creation date.
 // Includes a count of related transactions for each account.
 // Serializes account data for frontend compatibility.
-export const getUserAccounts = async () => {
+interface AccountResponse {
+  id: string
+  name: string
+  currency: string
+  type: string
+  balance: number
+  isDefault: boolean
+  _count?: {
+    transaction: number
+  }
+}
+
+export const getUserAccounts = async (): Promise<AccountResponse[]> => {
     const { userId } = await auth();
     if (!userId) {
         throw new Error("Unauthorized");
@@ -123,9 +165,9 @@ export const getUserAccounts = async () => {
         },
     });
 
-    const serializedAccount = accounts.map(serializeTransaction);
+    const serializedAccounts = accounts.map(serializeAccount);
 
-    return serializedAccount;
+    return serializedAccounts as AccountResponse[];
 }
 
 // Retrieves all transactions for the authenticated user, ordered by date.

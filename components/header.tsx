@@ -2,7 +2,7 @@ import Link from 'next/link';
 import React from 'react'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs';
 import { Button } from './ui/button';
-import { LayoutDashboard, PenBox } from 'lucide-react';
+import { LayoutDashboard, Loader2, PenBox } from 'lucide-react';
 import { checkUser } from '@/lib/checkUser';
 import { FlowaLogo } from '@/components/ui/flowa-logo'
 

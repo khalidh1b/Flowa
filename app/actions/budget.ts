@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 // Fetches the current user's budget and expenses for the current month.
 // Authenticates the user, retrieves their budget, and calculates expenses.
 // Returns both the budget and the sum of expenses for the month.
-export const getCurrentBudget = async (accountId) => {
+export const getCurrentBudget = async (accountId: string) => {
     try {
         const { userId } = await auth();
         if (!userId) throw new Error("Unauthorized");
@@ -68,7 +68,7 @@ export const getCurrentBudget = async (accountId) => {
 // Updates or creates the user's budget with the specified amount.
 // Authenticates the user, then upserts the budget record in the database.
 // Revalidates the dashboard path to reflect changes and returns the result.
-export const updateBudget = async (amount) => {
+export const updateBudget = async (amount: number) => {
     try {
         const { userId } = await auth();
         if (!userId) throw new Error("Unauthorized");
@@ -103,6 +103,7 @@ export const updateBudget = async (amount) => {
         };
     } catch (error) {
         console.error("Error updating budget:", error);
-        return { success: false, error: error.message };
+        const err = error as Error;
+        return { success: false, error: err.message };
     }
 }

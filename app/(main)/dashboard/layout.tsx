@@ -11,8 +11,9 @@ const DashboardLayout = () => {
                 </h1>
             </div>
 
-            <Suspense fallback={<div className="flex gap-2 items-center"><Loader className="animate-spin w-8 h-8"/>Loading...</div>}>
-                <DashboardPage />
+            <Suspense fallback={<div className="flex gap-2 items-center">
+                <Loader className="animate-spin w-8 h-8"/>Loading...</div>}>
+                <DashboardPage/>
             </Suspense>
         </div>
     )

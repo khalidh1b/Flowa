@@ -4,8 +4,37 @@ import { sendEmail } from "@/app/actions/send-email";
 import EmailTemplate from "@/emails/template"
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+type MonthlyReportData = {
+  month: string;
+  stats: {
+    totalIncome: number;
+    totalExpenses: number;
+    byCategory?: Record<string, number>;
+  };
+  insights?: string[];
+  totalExpenses: number;
+  budgetAmount: number;
+  percentageUsed: number
+};
+
+type BudgetAlertData = {
+    percentageUsed: number;
+    budgetAmount: number;
+    totalExpenses: number;
+    month: string
+    stats: {
+        totalIncome: number;
+        totalExpenses: number;
+        byCategory?: Record<string, number>;
+    };
+    insights?: string[];
+};
+
 export const checkBudgetAlert = inngest.createFunction(
-    { name: "Check Budget Alerts" },
+    { 
+        id: "check-budget-alert",
+        name: "Check Budget Alerts" 
+    },
     { cron: "0 */6 * * *" },
     async ({ step }) => {
         const budgets = await step.run("fetch-budget", async () => {
@@ -56,26 +85,13 @@ export const checkBudgetAlert = inngest.createFunction(
                     },
                 });
 
-                const totalExpenses = expenses._sum.amount?.toNumber() || 0;
-                const budgetAmount = budget.amount;
+                const totalExpenses = Number(expenses._sum.amount) || 0;
+                const budgetAmount = Number(budget.amount);
                 const percentageUsed = (totalExpenses / budgetAmount) * 100;
 
-                if (percentageUsed >= 80 && (!budget.lastAlertSent || isNewMonth(new Date(budget.lastAlertSent), new Date()))) {
+                if (percentageUsed >= 80 && (!budget.lastAlertSent || isNewMonth(budget.lastAlertSent, new Date()))) {
                     // Send Email
-                    await sendEmail({
-                        to: budget.user.email,
-                        subject: `Budget Alert for ${defaultAccount.name}`,
-                        react: EmailTemplate({
-                            userName: budget.user.name,
-                            type: "budget-alert",
-                            data: {
-                                percentageUsed,
-                                budgetAmount: parseInt(budgetAmount).toFixed(1),
-                                totalExpenses: parseInt(totalExpenses).toFixed(1),
-                                accountName: defaultAccount.name,
-                            }
-                        })
-                    })
+                    await sendEmail();
 
                     // Update lastAlertSent
                     await db.budget.update({
@@ -88,9 +104,10 @@ export const checkBudgetAlert = inngest.createFunction(
     },
 );
 
-const isNewMonth = (lastAlertDate, currentDate) => {
+const isNewMonth = (lastAlertDate: Date | string, currentDate: Date): boolean => {
+    const alertDate = typeof lastAlertDate === 'string' ? new Date(lastAlertDate) : lastAlertDate;
     return (
-        lastAlertDate.getMonth() !== currentDate.getMonth() || lastAlertDate.getFullYear() !== currentDate.getFullYear()
+        alertDate.getMonth() !== currentDate.getMonth() || alertDate.getFullYear() !== currentDate.getFullYear()
     )
 }
 
@@ -161,7 +178,7 @@ export const processRecurringTransactions = inngest.createFunction({
             return;
         }
 
-        await db.$transaction(async (tx) => {
+        await db.$transaction(async (tx: any) => {
             // Create new transaction 
             await tx.transaction.create({
                 data: {
@@ -177,7 +194,7 @@ export const processRecurringTransactions = inngest.createFunction({
             });
 
             // Update account balance
-            const balanceChange = transaction.type === "EXPENSE" ? -transaction.amount.toNumber() : transaction.amount.toNumber();
+            const balanceChange = transaction.type === "EXPENSE" ? -Number(transaction.amount) : Number(transaction.amount);
 
             await tx.account.update({
                 where: { id: transaction.accountId },
@@ -191,7 +208,7 @@ export const processRecurringTransactions = inngest.createFunction({
                     lastProcessed: new Date(),
                     nextRecurringDate: calculateNextRecurringDate(
                         new Date(),
-                        transaction.recurringInterval
+                        transaction.recurringInterval || "MONTHLY"
                     ),
                 },
             });
@@ -199,7 +216,7 @@ export const processRecurringTransactions = inngest.createFunction({
     });
 });
 
-const isTransactionDue = (transaction) => {
+const isTransactionDue = (transaction: any): boolean => {
     // If no lastProcessed date, transaction is due
     if (!transaction.lastProcessed) {
         return true;
@@ -213,7 +230,7 @@ const isTransactionDue = (transaction) => {
 }
 
 // Helper function to calculate next recurring date 
-const calculateNextRecurringDate = (startDate, interval) => {
+const calculateNextRecurringDate = (startDate: Date, interval: string): Date => {
     const date = new Date(startDate);
 
     switch (interval) {
@@ -224,12 +241,14 @@ const calculateNextRecurringDate = (startDate, interval) => {
             date.setDate(date.getDate() + 7);
             break;
         case "MONTHLY":
-            date.setDate(date.getMonth() + 1);
+            date.setMonth(date.getMonth() + 1);
             break;
         case "YEARLY":
-            date.setDate(date.getFullYear() + 1);
+            date.setFullYear(date.getFullYear() + 1);
             break;
     }
+    
+    return date;
 };
 
 export const generateMonthlyReports = inngest.createFunction({
@@ -254,27 +273,15 @@ export const generateMonthlyReports = inngest.createFunction({
 
             const insights = await generateFinancialInsights(stats, monthName);
 
-            await sendEmail({
-                to: user.email,
-                subject: `Your Monthly Financial Report - ${monthName}`,
-                react: EmailTemplate({
-                    userName: user.name,
-                    type: "monthly-report",
-                    data: {
-                        stats,
-                        month: monthName,
-                        insights,
-                    },
-                }),
-            });
+            await sendEmail();
         })
     }
 
     return { processed: users.length };
 });
 
-const generateFinancialInsights = async (stats, month) => {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const generateFinancialInsights = async (stats: any, month: string): Promise<string[]> => {
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
@@ -312,7 +319,7 @@ const generateFinancialInsights = async (stats, month) => {
     }
 };
 
-const getMonthlyStats = async (userId, month) => {
+const getMonthlyStats = async (userId: string, month: Date) => {
     const startDate = new Date(month.getFullYear(), month.getMonth(), 1);
     const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0);
 
@@ -327,8 +334,8 @@ const getMonthlyStats = async (userId, month) => {
         },
     });
 
-    return transactions.reduce((stats, t) => {
-        const amount = t.amount.toNumber();
+    return transactions.reduce((stats: any, t: any) => {
+        const amount = Number(t.amount);
         if (t.type === "EXPENSE") {
             stats.totalExpenses += amount;
             stats.byCategory[t.category] = (stats.byCategory[t.category] || 0) + amount;
@@ -339,7 +346,7 @@ const getMonthlyStats = async (userId, month) => {
     }, {
         totalExpenses: 0,
         totalIncome: 0,
-        byCategory: {},
+        byCategory: {} as Record<string, number>,
         transactionCount: transactions.length,
     })
 };

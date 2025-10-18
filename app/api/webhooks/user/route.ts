@@ -1,13 +1,30 @@
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
+
+// Type definitions for Clerk webhook data
+interface EmailAddress {
+    id: string;
+    email_address: string;
+}
+
+interface WebhookEvent {
+    data: {
+        id: string;
+        email_addresses?: EmailAddress[];
+        primary_email_address_id?: string;
+        first_name?: string;
+        username?: string;
+    };
+    type: string;
+}
 
 const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
     const rawBody = await req.text();
-    const headerPayload = headers();
+    const headerPayload = await headers();
 
     const svix_id = headerPayload.get("svix-id");
     const svix_timestamp = headerPayload.get("svix-timestamp");
@@ -22,7 +39,7 @@ export async function POST(req) {
     }
 
     // Verify the webhook
-    let evt;
+    let evt: WebhookEvent;
     try {
         const wh = new Webhook(webhookSecret);
         // The verification uses the raw body string, not the parsed JSON object
@@ -30,8 +47,8 @@ export async function POST(req) {
             "svix-id": svix_id,
             "svix-timestamp": svix_timestamp,
             "svix-signature": svix_signature,
-        });
-    } catch (err) {
+        }) as WebhookEvent;
+    } catch (err: unknown) {
         console.error("Error verifying webhook:", err);
         return new NextResponse("Error occured -- Invalid signature", {
             status: 400
@@ -39,7 +56,13 @@ export async function POST(req) {
     }
 
     // The event payload (evt.data) is the parsed JSON object from the raw body
-    const { id, email_addresses, primary_email_address_id, first_name, username } = evt.data;
+    const { id, email_addresses, primary_email_address_id, first_name, username } = evt.data as {
+        id: string;
+        email_addresses?: EmailAddress[];
+        primary_email_address_id?: string;
+        first_name?: string;
+        username?: string;
+    };
     const eventType = evt.type;
 
     if (!id) {
@@ -47,8 +70,8 @@ export async function POST(req) {
     }
 
     // Helper to find the primary email address
-    const getPrimaryEmail = (emails, primaryId) => {
-        return emails?.find(e => e.id === primaryId)?.email_address || emails?.[0]?.email_address;
+    const getPrimaryEmail = (emails?: EmailAddress[], primaryId?: string): string | undefined => {
+        return emails?.find((e: EmailAddress) => e.id === primaryId)?.email_address || emails?.[0]?.email_address;
     };
 
     // Handle the event
@@ -56,6 +79,10 @@ export async function POST(req) {
         switch (eventType) {
             case "user.created": {
                 const primaryEmail = getPrimaryEmail(email_addresses, primary_email_address_id);
+                
+                if (!primaryEmail) {
+                    return new NextResponse("Error occurred -- no email found for user", { status: 400 });
+                }
                 
                 await db.user.create({
                     data: {
@@ -94,7 +121,7 @@ export async function POST(req) {
                 console.log(`Unhandled event type: ${eventType}`);
             }
         }
-    } catch (error) {
+    } catch (error: unknown) {
         console.error(`Database error handling ${eventType} for user ${id}:`, error);
         return new NextResponse('Internal database error', { status: 500 });
     }

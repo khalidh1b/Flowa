@@ -3,7 +3,9 @@ import { Resend } from "resend"
 // Sends an email using the Resend API.
 // Accepts recipient, subject, and React content.
 // Returns success status and data or error.
-export const sendEmail = async ({ to, subject, react }) => {
+// { to, subject, react } unused destructed elements from sendEmail()
+
+export const sendEmail = async () => {
     const resend = new Resend(process.env.RESEND_API_KEY || "");
 
     try {

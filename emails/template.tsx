@@ -1,11 +1,43 @@
 import { Body, Container, Head, Heading, Html, Preview, Section, Text } from "@react-email/components";
 import * as React from "react";
 
+type MonthlyReportData = {
+  month: string;
+  stats: {
+    totalIncome: number;
+    totalExpenses: number;
+    byCategory?: Record<string, number>;
+  };
+  insights?: string[];
+  totalExpenses: number;
+  budgetAmount: number;
+  percentageUsed: number
+};
+
+type BudgetAlertData = {
+    percentageUsed: number;
+    budgetAmount: number;
+    totalExpenses: number;
+    month: string
+    stats: {
+        totalIncome: number;
+        totalExpenses: number;
+        byCategory?: Record<string, number>;
+    };
+    insights?: string[];
+};
+
+type EmailTemplateProps = {
+  userName?: string;
+  type?: "monthly-report" | "budget-alert";
+  data?: MonthlyReportData | BudgetAlertData;
+};
+
 export default function EmailTemplate({
     userName = "",
     type = "monthly-report",
-    data = {},
-}) {
+    data,
+}: EmailTemplateProps) {
     if (type === "monthly-report") {
         return <Html>
             <Head />
@@ -20,6 +52,7 @@ export default function EmailTemplate({
                     </Text>
 
                     {/* Main Stats */}
+                    {data && "stats" in data && data.stats && (
                     <Section style={styles.statsContainer}>
                         <div style={styles.stat}>
                             <Text style={styles.text}>Total Income</Text>
@@ -32,10 +65,11 @@ export default function EmailTemplate({
                         <div style={styles.stat}>
                             <Text style={styles.text}>Net</Text>
                             <Text style={styles.heading}>
-                                ₹{data?.stats.totalIncome - data?.stats.totalExpenses}
+                                ${data?.stats.totalIncome - data?.stats.totalExpenses}
                             </Text>
                         </div>
                     </Section>
+                    )}
 
                     {data?.stats?.byCategory && (
                         <Section style={styles.section}>
@@ -45,7 +79,7 @@ export default function EmailTemplate({
                                     <div key={category} style={styles.row}>
                                         <Text style={styles.text}>{category.charAt(0).toUpperCase() + category.slice(1)}&nbsp;&nbsp;&nbsp;
                                         </Text>
-                                        <Text style={styles.text}>₹{amount}</Text>
+                                        <Text style={styles.text}>{amount}</Text>
                                     </div>
                                 )
                             )}
@@ -82,16 +116,17 @@ export default function EmailTemplate({
                         <Section style={styles.statsContainer}>
                             <div style={styles.stat}>
                                 <Text style={styles.text}> Budget Amount </Text>
-                                <Text style={styles.heading}> ₹{data?.budgetAmount} </Text>
+                                <Text style={styles.heading}> {data?.budgetAmount} </Text>
                             </div>
                             <div style={styles.stat}>
                                 <Text style={styles.text}> Spent so Far </Text>
-                                <Text style={styles.heading}> ₹{data?.totalExpenses} </Text>
+                                <Text style={styles.heading}> {data?.totalExpenses} </Text>
                             </div>
-                            <div style={styles.stat}>
+                            {data && "budgetAmount" in data && (
+                                <div style={styles.stat}>
                                 <Text style={styles.text}> Remaining </Text>
-                                <Text style={styles.heading}> ₹{data?.budgetAmount - data?.totalExpenses} </Text>
-                            </div>
+                                <Text style={styles.heading}> {data?.budgetAmount - data?.totalExpenses} </Text>
+                            </div>)}
                         </Section>
                     </Container>
                 </Body>
@@ -100,7 +135,7 @@ export default function EmailTemplate({
     }
 }
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
     body: {
         backgroundColor: "#f6f9fc",
         fontFamily: "-apple-system, sans-serif",
