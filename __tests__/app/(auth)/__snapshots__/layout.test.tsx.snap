@@ -1,0 +1,151 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AuthLayout renders correctly (snapshot) for loading state 1`] = `
+<DocumentFragment>
+  <div
+    class="flex justify-center pt-40"
+  >
+    <div
+      data-testid="clerk-loading"
+    >
+      <div>
+        <svg
+          class="lucide lucide-loader-circle animate-spin w-7 w-7"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 12a9 9 0 1 1-6.219-8.56"
+          />
+        </svg>
+         Loading...
+      </div>
+    </div>
+    <div
+      data-testid="clerk-loaded"
+    >
+      <div
+        data-testid="signed-in"
+      >
+        <div>
+          Test Its Content
+        </div>
+      </div>
+      <div
+        data-testid="signed-out"
+      >
+        <div>
+          Test Its Content
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`AuthLayout renders correctly (snapshot) for signed in state 1`] = `
+<DocumentFragment>
+  <div
+    class="flex justify-center pt-40"
+  >
+    <div
+      data-testid="clerk-loading"
+    >
+      <div>
+        <svg
+          class="lucide lucide-loader-circle animate-spin w-7 w-7"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 12a9 9 0 1 1-6.219-8.56"
+          />
+        </svg>
+         Loading...
+      </div>
+    </div>
+    <div
+      data-testid="clerk-loaded"
+    >
+      <div
+        data-testid="signed-in"
+      >
+        <div>
+          Test Its Content
+        </div>
+      </div>
+      <div
+        data-testid="signed-out"
+      >
+        <div>
+          Test Its Content
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`AuthLayout renders correctly (snapshot) for signed out state 1`] = `
+<DocumentFragment>
+  <div
+    class="flex justify-center pt-40"
+  >
+    <div
+      data-testid="clerk-loading"
+    >
+      <div>
+        <svg
+          class="lucide lucide-loader-circle animate-spin w-7 w-7"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M21 12a9 9 0 1 1-6.219-8.56"
+          />
+        </svg>
+         Loading...
+      </div>
+    </div>
+    <div
+      data-testid="clerk-loaded"
+    >
+      <div
+        data-testid="signed-in"
+      >
+        <div>
+          Test Its Content
+        </div>
+      </div>
+      <div
+        data-testid="signed-out"
+      >
+        <div>
+          Test Its Content
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
