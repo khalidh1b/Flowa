@@ -31,8 +31,7 @@ export const AIShowcaseSection = () => {
                 src="https://res.cloudinary.com/dksiicemx/image/upload/v1759771476/financial-dashboard_zfdadk.png"
                 alt="AI-powered receipt scanning"
                 className="w-full h-full object-cover opacity-90"
-                width={100}
-                height={100}
+                fill
               />
             </div>
 

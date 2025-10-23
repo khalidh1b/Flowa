@@ -24,7 +24,6 @@ type Account = {
 }
 
 const AccountsPage = async (props: { params?: Promise<{ id: string }> }) => {
-    // normalize possibly-thenable params at runtime
     const params = await Promise.resolve(props.params as Promise<{ id: string }> | undefined);
     const { id } = params as { id: string };
 
@@ -50,12 +49,10 @@ const AccountsPage = async (props: { params?: Promise<{ id: string }> }) => {
                 </div>
             </div>
 
-            {/* Chart Section */}
             <Suspense fallback={<div className="flex gap-2 items-center"><Loader className="animate-spin w-8 h-8"/>Loading...</div>}>
                 <AccountChart transactions={transactions} account={account}/>
             </Suspense>
 
-            {/* Transaction Table */}
             <Suspense fallback={<div className="flex gap-2 items-center"><Loader className="animate-spin w-8 h-8"/>Loading...</div>}>
                 <TransactionTable transactions={transactions} />
             </Suspense>

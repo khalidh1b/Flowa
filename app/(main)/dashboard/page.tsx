@@ -78,4 +78,4 @@ const DashboardPage = async () => {
     );
 }
 
-export default DashboardPage
+export default DashboardPage;

@@ -2,8 +2,8 @@ import { Inngest } from "inngest";
 
 // Create a client to send and receive events
 export const inngest = new Inngest({
-    id: "welth",
-    name: "Welth",
+    id: "Flowa",
+    name: "Flowa",
     retryFunction: async (attempt: number) => ({
         delay: Math.pow(2, attempt) * 1000, // Exponential backoff
         maxAttempt: 2,

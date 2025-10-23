@@ -88,7 +88,7 @@ export default function EmailTemplate({
 
                     {data?.insights && (
                         <Section style={styles.section}>
-                            <Heading style={styles.heading}>Welth Insights</Heading>
+                            <Heading style={styles.heading}>Flowa Insights</Heading>
                             {data.insights.map((insight, index) => (
                                 <Text key={index} style={styles.text}>
                                     • {insight}

@@ -1,7 +1,7 @@
 import { db } from "../prisma";
 import { inngest } from "./client";
 import { sendEmail } from "@/app/actions/send-email";
-import EmailTemplate from "@/emails/template"
+// import EmailTemplate from "@/emails/template"
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 type MonthlyReportData = {

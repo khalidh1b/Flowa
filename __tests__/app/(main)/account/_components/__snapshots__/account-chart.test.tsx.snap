@@ -1,0 +1,153 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`AccountChart matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    data-testid="card"
+  >
+    <div
+      data-testid="card-header"
+    >
+      <div
+        data-testid="card-title"
+      >
+        Transaction Overview
+      </div>
+      <div
+        data-default-value="1M"
+        data-testid="select"
+      >
+        <select
+          data-testid="select-trigger"
+        >
+          <option>
+            Select range
+          </option>
+        </select>
+        <div
+          data-testid="select-content"
+        >
+          <option
+            data-testid="select-item"
+            value="7D"
+          >
+            Last 7 Days
+          </option>
+          <option
+            data-testid="select-item"
+            value="1M"
+          >
+            Last Month
+          </option>
+          <option
+            data-testid="select-item"
+            value="3M"
+          >
+            Last 3 Months
+          </option>
+          <option
+            data-testid="select-item"
+            value="6M"
+          >
+            Last 6 Months
+          </option>
+          <option
+            data-testid="select-item"
+            value="ALL"
+          >
+            All Time
+          </option>
+        </div>
+      </div>
+    </div>
+    <div
+      data-testid="card-content"
+    >
+      <div
+        class="flex justify-around mb-6 text-sm"
+      >
+        <div
+          class="text-center"
+        >
+          <p
+            class="text-muted-foreground"
+          >
+            Total Income
+          </p>
+          <p
+            class="text-lg font-bold text-green-500"
+          >
+            USD 1750.00
+          </p>
+        </div>
+        <div
+          class="text-center"
+        >
+          <p
+            class="text-muted-foreground"
+          >
+            Total Expenses
+          </p>
+          <p
+            class="text-lg font-bold text-red-500"
+          >
+            USD 800.00
+          </p>
+        </div>
+        <div
+          class="text-center"
+        >
+          <p
+            class="text-muted-foreground"
+          >
+            Net
+          </p>
+          <p
+            class="text-lg font-bold text-green-500"
+          >
+            USD 950.00
+          </p>
+        </div>
+      </div>
+      <div
+        class="h-[300px]"
+      >
+        <div
+          data-testid="responsive-container"
+        >
+          <div
+            data-testid="bar-chart"
+          >
+            <div
+              data-testid="cartesian-grid"
+            />
+            <div
+              data-key="date"
+              data-testid="x-axis"
+            />
+            <div
+              data-formatter="true"
+              data-testid="y-axis"
+            />
+            <div
+              data-formatter="true"
+              data-testid="tooltip"
+            />
+            <div
+              data-testid="legend"
+            />
+            <div
+              data-name="Income"
+              data-testid="bar-income"
+            />
+            <div
+              data-name="Expense"
+              data-testid="bar-expense"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</DocumentFragment>
+`;
