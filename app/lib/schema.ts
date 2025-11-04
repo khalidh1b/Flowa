@@ -11,14 +11,14 @@ export const accountSchema = z.object({
         { message: 'Invalid currency code' }
     ),
     balance: z.string().min(1, "Initial balance is required"),
-    isDefault: z.boolean().default(false),
+    isDefault: z.boolean(),
 });
 
 export const transactionSchema = z.object({
     type: z.enum(["INCOME", "EXPENSE"]),
     amount: z.string().min(1, "Amount is required"),
     description: z.string().optional(),
-    date: z.date({ required_error: "Date is required "}),
+    date: z.date({ error: "Date is required "}),
     accountId: z.string().min(1, "Account is required"),
     category: z.string().min(1, "Category is required"),
     isRecurring: z.boolean().default(false),

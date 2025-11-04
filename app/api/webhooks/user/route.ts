@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
                         name: first_name || username || "New User",
                     },
                 });
-                console.log(`User created in DB: ${id}`);
+                //console.log(`User created in DB: ${id}`);
                 break;
             }
 
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
                         name: first_name || username || "User",
                     },
                 });
-                console.log(`User updated in DB: ${id}`);
+                //console.log(`User updated in DB: ${id}`);
                 break;
             }
 
@@ -113,12 +113,12 @@ export async function POST(req: NextRequest) {
                 await db.user.delete({
                     where: { clerkUserId: id },
                 });
-                console.log(`User deleted from DB: ${id}`);
+                //console.log(`User deleted from DB: ${id}`);
                 break;
             }
 
             default: {
-                console.log(`Unhandled event type: ${eventType}`);
+                //console.log(`Unhandled event type: ${eventType}`);
             }
         }
     } catch (error: unknown) {

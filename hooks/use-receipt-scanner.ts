@@ -62,7 +62,7 @@ export const useReceiptScanner = ({ onScanComplete }: UseReceiptScannerProps) =>
     };
 
     useEffect(() => {
-        console.log('useEffect scanned data', scannedData);
+        //console.log('useEffect scanned data', scannedData);
         const hasDataBeenProcessed = scannedData !== undefined && scannedData !== null;
 
         if (scannedData && !scanReceiptLoading && Object.keys(scannedData).length > 0) {

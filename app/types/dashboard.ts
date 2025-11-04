@@ -34,4 +34,5 @@ export interface DashboardOverviewProps {
 export interface PieChartData {
   name: string
   value: number
+  [key: string]: any; // Index signature for recharts compatibility
 };

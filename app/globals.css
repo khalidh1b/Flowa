@@ -1,3 +1,6 @@
+/* Updated: 2025-11-03T09:41:32.563Z */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -76,6 +79,100 @@
   --sidebar-ring: oklch(0.65 0.2 200);
 }
 
+@theme {
+  /* Shadcn/UI colors - Light Theme */
+  --color-background: #ffffff;
+  --color-foreground: #19191D; /* Adjusted to primary text color */
+
+  --color-card: #ffffff;
+  --color-card-foreground: #19191D;
+
+  --color-popover: #ffffff;
+  --color-popover-foreground: #19191D;
+
+  --color-primary: #5B8DEF; /* Primary Blue */
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: #F2F2F5; /* Light Gray */
+  --color-secondary-foreground: #19191D;
+
+  --color-muted: #EDEEF2; /* Light Gray */
+  --color-muted-foreground: #8C929D; /* Body text gray */
+
+  --color-accent: #F2F2F5; /* Light Gray */
+  --color-accent-foreground: #19191D;
+
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #fafafa;
+
+  --color-border: #e5e5e5; /* Default border, will be overridden by custom */
+  --color-input: #EDEEF2; /* Light Gray */
+  --color-ring: #5B8DEF; /* Primary Blue */
+
+  --color-chart-1: #e67e22;
+  --color-chart-2: #2d8659;
+  --color-chart-3: #1e3a5f;
+  --color-chart-4: #f1c40f;
+  --color-chart-5: #e74c3c;
+
+  --color-sidebar: #f7f7f7;
+  --color-sidebar-foreground: #404040;
+  --color-sidebar-primary: #1a1a1a;
+  --color-sidebar-primary-foreground: #fafafa;
+  --color-sidebar-accent: #f0f0f0;
+  --color-sidebar-accent-foreground: #1a1a1a;
+  --color-sidebar-border: #d4d4d8;
+  --color-sidebar-ring: #3b82f6;
+
+  --radius-lg: 0.5rem;
+  --radius-md: calc(0.5rem - 2px);
+  --radius-sm: calc(0.5rem - 4px);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+
+  /* Custom Design System Colors */
+  --color-primary-blue: #5B8DEF;
+  --color-deep-blue: #4A7DD9;
+  --color-light-blue: #7DF0F8;
+  --color-sky-blue: #CBE3FF;
+  --color-purple-accent: #8B7DF8;
+  --color-dark-text: #19191D;
+  --color-dark-text-secondary: #263043;
+  --color-medium-gray: #626275;
+  --color-medium-gray-secondary: #7B828E;
+  --color-medium-gray-tertiary: #8C929D;
+  --color-light-gray: #F2F2F5;
+  --color-light-gray-secondary: #EDEEF2;
+  --color-border-gray: #36393F; /* Used with opacity */
+  --color-dark-bg: #21232a;
+  --color-dark-bg-secondary: #1a1e2d;
+  --color-white: #FFFFFF;
+  --color-placeholder: #7A7A84;
+
+  /* Custom Design System Fonts */
+  --font-sans: "Inter", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-heading: "Inter", sans-serif;
+}
+
 @theme inline {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -117,12 +214,112 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/*
+  The default border color has changed to currentColor in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: #e5e5e5;
+  }
+}
+
+@layer utilities {
+  body {
+    font-family: var(--font-body);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1 {
+    font-size: 56px; /* Mobile H1 */
+    font-weight: 500;
+    line-height: 102%;
+    letter-spacing: -1px;
+  }
+
+  @media (min-width: 1024px) { /* Desktop H1 */
+    h1 {
+      font-size: 80px;
+    }
+  }
+
+  h2 {
+    font-size: 36px; /* Mobile H2 */
+    font-weight: 500;
+    line-height: 125%;
+    letter-spacing: -1.28px;
+  }
+
+  @media (min-width: 1024px) { /* Desktop H2 */
+    h2 {
+      font-size: 60px;
+    }
+  }
+
+  h3 {
+    font-size: 24px; /* Mobile H3 */
+    font-weight: 500;
+    line-height: 140%;
+    letter-spacing: -0.4px;
+  }
+
+  @media (min-width: 1024px) { /* Desktop H3 */
+    h3 {
+      font-size: 30px;
+      letter-spacing: -0.7px;
+    }
+  }
+
+  p {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 175%;
+    color: var(--color-medium-gray-tertiary);
+  }
+
+  small {
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 140%;
+    color: var(--color-medium-gray-secondary);
+  }
+
+  .subheading {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 140%;
+    letter-spacing: -0.02em;
+  }
+
+  @media (min-width: 768px) {
+    .subheading {
+      font-size: 19px;
+    }
+  }
+
+  .container {
+    max-width: 1152px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 32px;
+    padding-right: 32px;
   }
 }
 
@@ -154,5 +351,9 @@
   .animate-shimmer {
     animation: shimmer 3s linear infinite;
   }
+}
 
+/* Hide Next.js error overlay portal */
+nextjs-portal {
+  display: none !important;
 }

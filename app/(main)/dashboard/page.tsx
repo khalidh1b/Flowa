@@ -20,10 +20,10 @@ interface Account {
 const DashboardPage = async () => {
     const accounts = await getUserAccounts();
 
-    console.log('user all accounts', accounts);
+    //console.log('user all accounts', accounts);
     const defaultAccount = accounts?.find((account) => account.isDefault);
 
-    console.log(defaultAccount);
+    //console.log(defaultAccount);
     let budgetData = null;
     if (defaultAccount) {
         budgetData = await getCurrentBudget(defaultAccount.id);

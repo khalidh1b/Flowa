@@ -22,7 +22,7 @@ interface TransactionFormUIProps {
     getValues: any;
     
     type: "INCOME" | "EXPENSE";
-    isRecurring: boolean;
+    isRecurring: boolean | undefined;
     date: Date;
     category: string;
     filteredCategories: Category[];

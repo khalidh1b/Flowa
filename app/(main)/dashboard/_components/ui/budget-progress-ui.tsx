@@ -105,7 +105,7 @@ export const BudgetProgressUI: React.FC<BudgetProgressUIProps> = ({
           <div className='space-y-2'>
             <Progress 
               value={percentUsed} 
-              extraStyles={getProgressColor(percentUsed)}
+              indicatorClassName={getProgressColor(percentUsed)}
             />
             <p className='text-sm text-muted-foreground text-right'>
               {percentUsed.toFixed(1)}% used

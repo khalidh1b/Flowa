@@ -42,7 +42,7 @@ export const createTransaction = async (data: any): Promise<{ success: boolean; 
                     },
                 });
 
-                console.log("Throwing error!");
+                //console.log("Throwing error!");
                 throw new Error("Too many requests. Please try again later.");
             }
 
@@ -168,7 +168,7 @@ export const scanReceipt = async (base64String: string, mimeType: string): Promi
     ]);
 
     const text = result?.response?.text?.();
-    console.log("Gemini raw text:", text);
+    //console.log("Gemini raw text:", text);
 
     if (!text) throw new Error("Empty response from Gemini");
 

@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 
 interface RecurringTransactionToggleProps {
-    isRecurring: boolean;
+    isRecurring: boolean | undefined;
     onRecurringChange: (checked: boolean) => void;
     recurringInterval?: string;
     onIntervalChange?: (value: "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY") => void;
