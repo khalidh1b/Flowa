@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { useTransactionForm } from '@/hooks/use-transaction-form';
+import { useTransactionForm } from '@/hooks/use-transaction-form/use-transaction-form';
 import TransactionFormUI from './ui/transaction-form-ui';
 import type { AddTransactionFormProps } from '@/app/types/transaction';
 
