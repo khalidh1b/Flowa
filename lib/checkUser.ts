@@ -1,71 +1,50 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { db } from "./prisma";
 import type { User } from "@prisma/client";
+import { ERROR_MESSAGES } from "@/hooks/use-transaction-form";
 
-// Constants
 const DEFAULT_USER_NAME = "Unknown User";
 const USER_CREATION_ERROR = "Failed to check or create user";
 const MISSING_EMAIL_ERROR = "User has no email address";
-const DB_OPERATION_ERROR = "Database operation failed in checkUser for clerkUserId";
 
-// Types
-type CheckUserResult = User | null;
-type ClerkUser = Awaited<ReturnType<typeof currentUser>>;
-
-// constructs a user's display name from their Clerk profile
+// builds display name from user's first and last name 
 const constructUserName = (firstName: string | null, lastName: string | null): string => {
-    const first = firstName?.trim() || "";
-    const last = lastName?.trim() || "";
-    
-    if (first && last) {
-        return `${first} ${last}`;
-    }
-    return first || last || DEFAULT_USER_NAME;
+    const first = firstName?.trim();
+    const last = lastName?.trim();
+    return (first && last) ? `${first} ${last}` : first || last || DEFAULT_USER_NAME;
 };
 
-// Extracts the primary email from Clerk user
-const getPrimaryEmail = (user: NonNullable<ClerkUser>): string => {
-    const primaryEmail = user.emailAddresses[0]?.emailAddress;
-    
-    if (!primaryEmail) {
-        throw new Error(MISSING_EMAIL_ERROR);
-    }
-    
-    return primaryEmail;
+// extracts primary email from Clerk user profile
+const getPrimaryEmail = (user: Awaited<ReturnType<typeof currentUser>>) => {
+    const email = user?.emailAddresses[0]?.emailAddress;
+    if (!email) throw new Error(MISSING_EMAIL_ERROR);
+    return email;
 };
 
-// Checks if a user exists in the database and creates one if not found
-export const checkUser = async (): Promise<CheckUserResult> => {
+// authenticates current user and ensures database record exists
+export const checkUser = async (): Promise<User | null> => {
     const user = await currentUser();
-
-    if (!user) {
-        return null;
-    }
+    if (!user) return null;
 
     try {
-        const userRecord = await db.user.upsert({
-            where: {
-                clerkUserId: user.id,
-            },
+        return await db.user.upsert({
+            where: { clerkUserId: user.id },
             update: {},
             create: {
                 clerkUserId: user.id,
                 name: constructUserName(user.firstName, user.lastName),
-                imageUrl: user.imageUrl || "",
+                imageUrl: user.imageUrl ?? "",
                 email: getPrimaryEmail(user),
             },
         });
-
-        return userRecord;
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`${DB_OPERATION_ERROR}: ${user.id}`, {
-            error: errorMessage,
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(`Database operation failed for clerkUserId ${user.id}`, {
+            error: message,
             clerkUserId: user.id,
             timestamp: new Date().toISOString(),
         });
         
-        // Re-throw with more specific error for upstream handling
-        throw new Error(`${USER_CREATION_ERROR}: ${errorMessage}`);
+        throw new Error(`${USER_CREATION_ERROR}: ${ERROR_MESSAGES}`);
     }
 };
