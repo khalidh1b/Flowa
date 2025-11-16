@@ -9,89 +9,71 @@ import { Account, UpdatedAccount } from '@/app/types/dashboard';
 interface UseAccountCardOptions {
     onSuccess?: (message: string) => void;
     onError?: (error: Error) => void;
-    debounceMs?: number;
 }
 
 export const useAccountCard = (
     account: Account,
     options: UseAccountCardOptions = {}
 ) => {
-    const { onSuccess, onError, debounceMs = 300 } = options;
-    
+    const { onSuccess, onError } = options;
     const isMountedRef = useRef(true);
     
     const { 
         loading: updateDefaultLoading, 
         fn: updateDefaultFn, 
-        data, 
+        data: updatedAccount, 
         error 
     } = useFetch(updateDefaultAccount);
-    
-    const updatedAccount = data as UpdatedAccount | undefined;
 
-    // Memoize the success message
-    const successMessage = useCallback(() => {
-        return `Default account updated to "${account.name}" successfully!`;
-    }, [account.name]);
+    // generate success message for toast notifications
+    const getSuccessMessage = useCallback(() => 
+        `default account updated to "${account.name}" successfully!`,
+        [account.name]
+    );
 
-    // Optimized handler with debouncing and better error handling
+    // handle default account change with validation and error handling
     const handleDefaultChange = useCallback(
         async (event: React.MouseEvent<HTMLButtonElement>) => {
             event.preventDefault();
             event.stopPropagation();
 
-            // Prevent multiple simultaneous requests
-            if (updateDefaultLoading) {
-                return;
-            }
+            // prevent multiple simultaneous requests
+            if (updateDefaultLoading) return;
 
-            // Early validation
+            // validate that we're not unsetting the only default account
             if (account.isDefault) {
-                toast.warning("You need at least ONE default account");
+                toast.warning("you need at least one default account");
                 return;
             }
 
             try {
                 await updateDefaultFn(account.id);
             } catch (error) {
-                toast.error("Failed to update default account");
-                console.error('Failed to update default account:', error);
+                toast.error("failed to update default account");
+                console.error('failed to update default account:', error);
             }
         },
-        [account.id, account.isDefault, account.name, updateDefaultLoading, updateDefaultFn]
+        [account.id, account.isDefault, updateDefaultLoading, updateDefaultFn]
     );
 
-    // Handle success state with cleanup
+    // handle api response (success and error) in a single effect
     useEffect(() => {
         if (!isMountedRef.current) return;
 
+        // handle successful update
         if (updatedAccount?.success) {
-            const message = successMessage();
-            
-            if (onSuccess) {
-                onSuccess(message);
-            } else {
-                toast.success(message);
-            }
+            const message = getSuccessMessage();
+            onSuccess ? onSuccess(message) : toast.success(message);
         }
-    }, [updatedAccount, onSuccess, successMessage]);
 
-    // Handle error state with cleanup and custom error handling
-    useEffect(() => {
-        if (!isMountedRef.current) return;
-
+        // handle error response
         if (error) {
             const err = error as Error;
-            
-            if (onError) {
-                onError(err);
-            } else {
-                toast.error(err.message || "Failed to update default account");
-            }
+            onError ? onError(err) : toast.error(err.message || "failed to update default account");
         }
-    }, [error, onError]);
+    }, [updatedAccount, error, onSuccess, onError, getSuccessMessage]);
 
-    // Cleanup funciton on unmount
+    // cleanup on component unmount
     useEffect(() => {
         return () => {
             isMountedRef.current = false;
@@ -101,9 +83,9 @@ export const useAccountCard = (
     return {
         updateDefaultLoading,
         handleDefaultChange,
-        lastUpdatedAccount: updatedAccount,
+        lastUpdatedAccount: updatedAccount as UpdatedAccount | undefined,
         hasError: !!error,
-        error
+        error: error as Error | undefined
     };
 };
 
