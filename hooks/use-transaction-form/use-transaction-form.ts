@@ -15,6 +15,7 @@ import {
 } from './utils';
 import { useTransactionSubmission } from './use-transaction-submission';
 import { useReceiptScanner } from './use-receipt-scanner';
+
 import type { 
     TransactionFormValues, 
     Account, 
@@ -22,6 +23,7 @@ import type {
     TransactionResult 
 } from '@/app/types/transaction';
 
+// custom hook for managing transaction form state and operations
 export const useTransactionForm = (
     accounts: Account[], 
     categories: Category[], 
@@ -29,31 +31,24 @@ export const useTransactionForm = (
     initialData: Partial<TransactionFormValues & { amount?: number }> | null = null
 ) => {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const editId = searchParams.get("edit");
+    const editId = useSearchParams().get("edit");
 
-    // Memoize default values
-    const defaultValues = useMemo(() => {
-        return editMode && initialData 
+    // memoized form default values based on mode
+    const defaultValues = useMemo(() => 
+        editMode && initialData 
             ? createEditFormValues(initialData, accounts)
-            : createDefaultFormValues(accounts);
-    }, [editMode, initialData, accounts]);
+            : createDefaultFormValues(accounts),
+        [editMode, initialData, accounts]
+    );
 
-    const {
-        register,
-        setValue,
-        handleSubmit,
-        formState: { errors },
-        watch,
-        getValues,
-        reset,
-        setError,
-    } = useForm({
+    const formMethods = useForm({
         resolver: zodResolver(transactionSchema),
         defaultValues,
     });
 
-    // Use transaction submission hook
+    const { register, setValue, handleSubmit, formState: { errors }, watch, getValues, reset, setError } = formMethods;
+
+    // transaction submission logic
     const { transactionFunction, onSubmit: createOnSubmit } = useTransactionSubmission(
         editMode,
         editId,
@@ -61,42 +56,39 @@ export const useTransactionForm = (
         setError
     );
 
-    const {
-        loading: transactionLoading,
-        fn: transactionFn,
-        data: transactionResult,
-        error: transactionError,
-    } = useFetch(transactionFunction);
+    // api call hook for transaction operations
+    const { loading: transactionLoading, execute: transactionFn, data: transactionResult, error: transactionError } = 
+        useFetch(transactionFunction);
 
-    // Use receipt scanner hook
     const { handleScanComplete } = useReceiptScanner(setValue);
 
-    const formValues = watch(["type", "isRecurring", "date", "category"]);
-    const [type, isRecurring, date, category] = formValues;
+    // watched form values for reactive updates
+    const [type, isRecurring, date, category] = watch(["type", "isRecurring", "date", "category"]);
 
-    // Memoize filtered categories
-    const filteredCategories = useMemo(() => {
-        return categories.filter((cat: Category) => cat.type === type);
-    }, [categories, type]);
+    // memoized categories filtered by transaction type
+    const filteredCategories = useMemo(() => 
+        categories.filter((cat: Category) => cat.type === type),
+        [categories, type]
+    );
 
-    // Create submit handler that uses the submission hook
-    const onSubmit = useCallback(async (data: TransactionFormValues) => {
-        await createOnSubmit(data, transactionFn);
-    }, [createOnSubmit, transactionFn]);
+    // form submission handler
+    const onSubmit = useCallback(async (data: TransactionFormValues) => 
+        await createOnSubmit(data, transactionFn),
+        [createOnSubmit, transactionFn]
+    );
 
+    // handle successful transaction submission
     useEffect(() => {
-        if (transactionResult && transactionResult.success && !transactionLoading) {
+        if (transactionResult?.success && !transactionLoading) {
             toast.success(SUCCESS_MESSAGES[editMode ? "update" : "create"]);
             reset();
             
             const accountId = transactionResult.data?.accountId;
-            if (accountId) {
-                router.push(`/account/${accountId}`);
-            }
+            if (accountId) router.push(`/account/${accountId}`);
         }
     }, [transactionResult, transactionLoading, editMode, reset, router]);
 
-    // Handle transaction errors
+    // handle transaction errors
     useEffect(() => {
         if (transactionError && !transactionLoading) {
             toast.error(transactionError.message || ERROR_MESSAGES.transactionFailed);
@@ -104,27 +96,8 @@ export const useTransactionForm = (
     }, [transactionError, transactionLoading]);
 
     return {
-        // Form methods
-        register,
-        setValue,
-        handleSubmit,
-        errors,
-        watch,
-        getValues,
-        reset,
-        setError,
-        
-        // Form state
-        type,
-        isRecurring,
-        date,
-        category,
-        filteredCategories,
-        transactionLoading,
-        transactionError,
-        
-        // Handlers
-        onSubmit,
-        handleScanComplete,
+        type, isRecurring, date, category, filteredCategories, transactionLoading, transactionError,
+        register, setValue, handleSubmit, errors, watch, getValues, reset, setError,
+        onSubmit, handleScanComplete,
     };
 };
