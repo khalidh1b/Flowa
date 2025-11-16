@@ -38,7 +38,7 @@ const CreateAccountDrawer = ({ children }: CreateAccountDrawerProps) => {
         },
     })
 
-    const { data: newAccount, error, fn: createAccountFn, loading: createAccountLoading } = useFetch(createAccount);
+    const { data: newAccount, error, execute: createAccountFn, loading: createAccountLoading } = useFetch(createAccount);
 
     useEffect(() => {
         if (newAccount && !createAccountLoading) {
