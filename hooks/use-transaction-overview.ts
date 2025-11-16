@@ -2,24 +2,10 @@ import { useState, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { Account, Transaction, PieChartData } from '@/app/types/dashboard';
 
-// Constants
-const COLORS = [
-  "#FF6B6B",
-  "#4ECDC4", 
-  "#45B7D1",
-  "#96CEB4",
-  "#FFEEAD",
-  "#D4A5A5",
-  "#9FA8DA",
-] as const;
+const COLORS = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEEAD", "#D4A5A5", "#9FA8DA"] as const;
+const RECENT_COUNT = 5;
+const TRANSACTION_TYPES = { EXPENSE: 'EXPENSE', INCOME: 'INCOME' } as const;
 
-const DEFAULT_RECENT_TRANSACTIONS_COUNT = 5;
-const TRANSACTION_TYPES = {
-  EXPENSE: 'EXPENSE',
-  INCOME: 'INCOME',
-} as const;
-
-// Types
 interface UseTransactionOverviewReturn {
   selectedAccountId: string | undefined;
   setSelectedAccountId: (id: string) => void;
@@ -34,131 +20,87 @@ interface UseTransactionOverviewReturn {
   hasExpenses: boolean;
   isLoading: boolean;
   error: string | null;
-}
-
-// Utility functions
-const isValidDate = (dateString: string): boolean => {
-  const date = new Date(dateString);
-  return !isNaN(date.getTime());
 };
 
-const parseDate = (dateString: string): Date => {
-  if (!isValidDate(dateString)) {
-    return new Date();
-  }
-  return new Date(dateString);
+// date utilities
+const dateUtils = {
+  isValid: (date: string): boolean => !isNaN(new Date(date).getTime()),
+  parse: (date: string): Date => dateUtils.isValid(date) ? new Date(date) : new Date(),
+  format: (date: string): string => dateUtils.isValid(date) ? format(dateUtils.parse(date), "PP") : 'Invalid Date'
 };
-
 
 export const useTransactionOverview = (
   accounts: Account[] = [], 
   transactions: Transaction[] = []
 ): UseTransactionOverviewReturn => {
-  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(() => {
-    // Safe initialization with fallback
-    if (!accounts.length) return undefined;
-    return accounts.find((a) => a.isDefault)?.id || accounts[0]?.id;
-  });
+  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(() => 
+    accounts.length ? accounts.find(a => a.isDefault)?.id || accounts[0]?.id : undefined
+  );
 
-  // Error handling
-  const error = useMemo(() => {
-    if (!accounts.length) return 'No accounts available';
-    if (!transactions.length) return 'No transactions available';
-    if (selectedAccountId && !accounts.find(a => a.id === selectedAccountId)) {
-      return 'Selected account not found';
-    }
-    return null;
+  // validation and error states
+  const { error, isLoading } = useMemo(() => {
+    const hasError = !accounts.length ? 'No accounts available' : 
+                   !transactions.length ? 'No transactions available' :
+                   selectedAccountId && !accounts.find(a => a.id === selectedAccountId) ? 'Selected account not found' : 
+                   null;
+    return { error: hasError, isLoading: false };
   }, [accounts, transactions, selectedAccountId]);
 
-  const isLoading = useMemo(() => {
-    return false; 
-  }, []);
+  // filtered transactions for selected account
+  const accountTransactions = useMemo(() => 
+    selectedAccountId ? transactions.filter(t => 
+      t.accountId === selectedAccountId && dateUtils.isValid(t.date)
+    ) : []
+  , [selectedAccountId, transactions]);
 
-  // Memoized account transactions filter
-  const accountTransactions = useMemo(() => {
-    if (!selectedAccountId || !transactions.length) return [];
-    
-    return transactions.filter((transaction) => {
-      return transaction.accountId === selectedAccountId && 
-             isValidDate(transaction.date);
-    });
-  }, [selectedAccountId, transactions]);
+  // recent transactions sorted by date
+  const recentTransactions = useMemo(() => 
+    [...accountTransactions]
+      .sort((a, b) => dateUtils.parse(b.date).getTime() - dateUtils.parse(a.date).getTime())
+      .slice(0, RECENT_COUNT)
+  , [accountTransactions]);
 
-  // Memoized recent transactions with safe sorting
-  const recentTransactions = useMemo(() => {
-    if (!accountTransactions.length) return [];
-    
-    return [...accountTransactions]
-      .sort((a, b) => {
-        const dateA = parseDate(a.date).getTime();
-        const dateB = parseDate(b.date).getTime();
-        return dateB - dateA;
-      })
-      .slice(0, DEFAULT_RECENT_TRANSACTIONS_COUNT);
-  }, [accountTransactions]);
+  // current month expenses for chart data
+  const { currentMonthExpenses, expensesByCategory, pieChartData } = useMemo(() => {
+    const now = new Date();
+    const currentMonthExpenses = accountTransactions.filter(t => 
+      t.type === TRANSACTION_TYPES.EXPENSE &&
+      dateUtils.parse(t.date).getMonth() === now.getMonth() &&
+      dateUtils.parse(t.date).getFullYear() === now.getFullYear()
+    );
 
-  // Memoized current month expenses
-  const currentMonthExpenses = useMemo(() => {
-    if (!accountTransactions.length) return [];
-    
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const currentYear = currentDate.getFullYear();
-    
-    return accountTransactions.filter((transaction) => {
-      const transactionDate = parseDate(transaction.date);
-      return (
-        transaction.type === TRANSACTION_TYPES.EXPENSE &&
-        transactionDate.getMonth() === currentMonth &&
-        transactionDate.getFullYear() === currentYear
-      );
-    });
-  }, [accountTransactions]);
-
-  // Memoized expenses by category
-  const expensesByCategory = useMemo(() => {
-    return currentMonthExpenses.reduce<Record<string, number>>((acc, transaction) => {
-      const category = transaction.category || 'Uncategorized';
-      const amount = Math.abs(transaction.amount);
-      acc[category] = (acc[category] || 0) + amount;
+    const expensesByCategory = currentMonthExpenses.reduce((acc, t) => {
+      const category = t.category || 'Uncategorized';
+      acc[category] = (acc[category] || 0) + Math.abs(t.amount);
       return acc;
-    }, {});
-  }, [currentMonthExpenses]);
+    }, {} as Record<string, number>);
 
-  // Memoized pie chart data
-  const pieChartData = useMemo((): PieChartData[] => {
-    return Object.entries(expensesByCategory)
+    const pieChartData = Object.entries(expensesByCategory)
       .filter(([_, amount]) => amount > 0)
-      .map(([category, amount]) => ({
-        name: category,
-        value: Number(amount.toFixed(2)),
-      }))
+      .map(([category, amount]) => ({ name: category, value: Number(amount.toFixed(2)) }))
       .sort((a, b) => b.value - a.value);
-  }, [expensesByCategory]);
 
-  // Memoized utility functions
-  const formatTransactionDate = useCallback((dateString: string): string => {
-    if (!isValidDate(dateString)) {
-      return 'Invalid Date';
-    }
-    return format(parseDate(dateString), "PP");
-  }, []);
+    return { currentMonthExpenses, expensesByCategory, pieChartData };
+  }, [accountTransactions]);
 
-  const getTransactionIcon = useCallback((type: string): string => {
-    return type === TRANSACTION_TYPES.EXPENSE ? "ArrowDownRight" : "ArrowUpRight";
-  }, []);
+  // utility callbacks
+  const formatTransactionDate = useCallback((date: string): string => dateUtils.format(date), []);
+  
+  const getTransactionIcon = useCallback((type: string): string => 
+    type === TRANSACTION_TYPES.EXPENSE ? "ArrowDownRight" : "ArrowUpRight", []
+  );
 
-  const getTransactionColor = useCallback((type: string): string => {
-    return type === TRANSACTION_TYPES.EXPENSE ? "text-red-500" : "text-green-500";
-  }, []);
+  const getTransactionColor = useCallback((type: string): string => 
+    type === TRANSACTION_TYPES.EXPENSE ? "text-red-500" : "text-green-500", []
+  );
 
-  const getChartColors = useCallback((index: number): string => {
-    return COLORS[index % COLORS.length];
-  }, []);
+  const getChartColors = useCallback((index: number): string => 
+    COLORS[index % COLORS.length], []
+  );
 
-  // Memoized boolean states
-  const hasTransactions = useMemo(() => accountTransactions.length > 0, [accountTransactions]);
-  const hasExpenses = useMemo(() => pieChartData.length > 0, [pieChartData]);
+  // derived boolean states
+  const hasTransactions = accountTransactions.length > 0;
+  const hasExpenses = pieChartData.length > 0;
 
   return {
     selectedAccountId,
