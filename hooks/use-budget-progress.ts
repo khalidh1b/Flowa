@@ -20,7 +20,7 @@ export const useBudgetProgress = (initialBudget: Budget, currentExpenses: number
     initialBudget?.amount.toString() || ""
   );
 
-  const { loading: isLoading, fn: updateBudgetFn, data: updateResult, error } = useFetch(updateBudget);
+  const { loading: isLoading, execute: updateBudgetFn, data: updateResult, error } = useFetch(updateBudget);
 
   // memoized percentage calculation for efficiency
   const percentUsed = useMemo(() => {
