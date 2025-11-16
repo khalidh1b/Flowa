@@ -5,51 +5,48 @@ import { ERROR_MESSAGES } from './constants';
 import { safeParseFloat } from './utils';
 import type { TransactionFormValues } from '@/app/types/transaction';
 
+// custom hook for handling transaction submission logic
 export const useTransactionSubmission = (
     editMode: boolean,
     editId: string | null,
     getCurrencyForAccount: (accountId: string) => string,
     setError: (field: any, error: { message: string }) => void
 ) => {
-    const transactionFunction = useCallback(async (...args: any[]) => {
-        if (editMode) {
-            const [id, data] = args;
-            return updateTransaction(id, data);
-        } else {
-            const [data] = args;
-            return createTransaction(data);
+    
+    // determines which transaction function to use based on edit mode
+    const transactionFunction = useCallback(async (data: TransactionFormValues) => {
+        const amount = safeParseFloat(data.amount);
+        
+        // validate amount is positive
+        if (amount <= 0) {
+            setError("amount", { message: ERROR_MESSAGES.amountValidation });
+            throw new Error(ERROR_MESSAGES.amountValidation);
         }
-    }, [editMode]);
 
-    const onSubmit = useCallback(async (data: TransactionFormValues, transactionFn: (...args: any[]) => Promise<any>) => {
+        // prepare transaction data with currency
+        const formData = {
+            ...data,
+            currency: getCurrencyForAccount(data.accountId),
+            amount,
+        };
+
+        // execute transaction based on mode
+        if (editMode && editId) {
+            return await updateTransaction(editId, formData);
+        } else {
+            return await createTransaction(formData);
+        }
+    }, [editMode, editId, getCurrencyForAccount, setError]);
+
+    // handles form submission with validation and error handling (kept for backward compatibility)
+    const onSubmit = useCallback(async (data: TransactionFormValues) => {
         try {
-            const currency = getCurrencyForAccount(data.accountId);
-            const amount = safeParseFloat(data.amount);
-
-            if (amount <= 0) {
-                setError("amount", { message: ERROR_MESSAGES.amountValidation });
-                return;
-            }
-
-            const formData = {
-                ...data,
-                currency,
-                amount,
-            };
-
-            if (editMode && editId) {
-                await transactionFn(editId, formData);
-            } else {
-                await transactionFn(formData);
-            }
+            await transactionFunction(data);
         } catch (error) {
-            console.error("Transaction submission error:", error);
+            console.error("transaction submission error:", error);
             toast.error(ERROR_MESSAGES.submissionError);
         }
-    }, [getCurrencyForAccount, editMode, editId, setError]);
+    }, [transactionFunction]);
 
-    return {
-        transactionFunction,
-        onSubmit,
-    };
+    return { transactionFunction, onSubmit };
 };
