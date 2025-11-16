@@ -7,19 +7,30 @@ import {
 } from '@/utils/chart-data-processor';
 
 interface UseChartDataReturn {
-  filteredData: ChartData[];
-  totals: { income: number; expense: number };
+  readonly filteredData: ChartData[];
+  readonly totals: { readonly income: number; readonly expense: number };
 }
 
+// processing transaction data into chart-ready format
 export function useChartData(
-  transactions: Transaction[],
+  transactions: Transaction[] | undefined,
   dateRange: DateRangeKey
 ): UseChartDataReturn {
+  
+  // memoize filtered and grouped data to prevent unnecessary recalculations
   const filteredData = useMemo(() => {
-    const filtered = filterTransactionsByDateRange(transactions, dateRange);
-    return groupTransactionsByDate(filtered);
+    if (!transactions?.length) return [];
+    
+    try {
+      const filtered = filterTransactionsByDateRange(transactions, dateRange);
+      return groupTransactionsByDate(filtered);
+    } catch (error) {
+      console.error('error processing chart data:', error);
+      return [];
+    }
   }, [transactions, dateRange]);
 
+  // calculate totals only when filtered data changes
   const totals = useMemo(
     () => calculateTotals(filteredData),
     [filteredData]
@@ -29,4 +40,4 @@ export function useChartData(
     filteredData,
     totals
   };
-}
+};
