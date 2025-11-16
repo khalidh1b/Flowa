@@ -1,23 +1,12 @@
-import { HeroSection } from "@/components/sections/hero-section";
-import { FeaturesGrid } from "@/components/sections/features-grid";
-import ThreeSteps from "@/components/sections/three-steps";
-import UndetectableComparison from "@/components/sections/undetectable-comparison";
-import TranscriptionStats from "@/components/sections/transcription-stats";
-import FaqSection from "@/components/sections/faq-section";
-import FinalCta from "@/components/sections/final-cta";
-
-export default function Home() {
+const Home = () => {
   return (
-      <div className="min-h-screen w-full">
-        <main className="w-full">
-          <HeroSection />
-          <FeaturesGrid />
-          <ThreeSteps />
-          <UndetectableComparison />
-          <TranscriptionStats />
-          <FaqSection />
-          <FinalCta />
-        </main>
-      </div>
+    <div className="h-screen flex flex-col items-center justify-center">
+      <main className="text-center">
+        <h1>Landing page Upgrading🐱‍💻</h1>
+        <h2 className="mt-6">But the system is live</h2>
+      </main>
+    </div>
   );
 };
+
+export default Home;
