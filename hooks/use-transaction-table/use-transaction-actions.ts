@@ -12,7 +12,7 @@ export const useTransactionActions = () => {
 
     const {
         loading: deleteLoading,
-        fn: deleteFn,
+        execute: deleteFn,
         data: deleted,
     } = useFetch(bulkDeleteTransaction);
 
