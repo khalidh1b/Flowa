@@ -2,17 +2,17 @@
 
 import { updateBudget } from '@/app/actions/budget';
 import useFetch from '@/hooks/use-fetch';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 interface Budget {
   amount: number;
   currency?: string;
-};
+}
 
-interface UpdatedBudget {
+interface UpdateResult {
   success: boolean;
-};
+}
 
 export const useBudgetProgress = (initialBudget: Budget, currentExpenses: number) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -20,49 +20,55 @@ export const useBudgetProgress = (initialBudget: Budget, currentExpenses: number
     initialBudget?.amount.toString() || ""
   );
 
-  const { loading: isLoading, fn: updateBudgetFn, data: updatedBudget, error } = useFetch(updateBudget);
+  const { loading: isLoading, fn: updateBudgetFn, data: updateResult, error } = useFetch(updateBudget);
 
-  const percentUsed = initialBudget
-    ? (currentExpenses / initialBudget.amount) * 100
-    : 0;
+  // memoized percentage calculation for efficiency
+  const percentUsed = useMemo(() => {
+    if (!initialBudget?.amount || initialBudget.amount <= 0) return 0;
+    return Math.min((currentExpenses / initialBudget.amount) * 100, 100);
+  }, [currentExpenses, initialBudget?.amount]);
 
-  const handleBudgetUpdate = async () => {
+  // handle budget update with validation
+  const handleBudgetUpdate = useCallback(async () => {
     const amount = parseFloat(newBudget);
 
     if (isNaN(amount) || amount <= 0) {
-      toast.error("Please enter a valid amount");
+      toast.error("please enter a valid amount");
       return;
     }
     
     await updateBudgetFn(amount);
-  };
+  }, [newBudget, updateBudgetFn]);
 
-  const handleCancel = () => {
+  // cancel editing and reset form
+  const handleCancel = useCallback(() => {
     setNewBudget(initialBudget?.amount?.toString() || "");
     setIsEditing(false);
-  };
+  }, [initialBudget?.amount]);
 
-  const startEditing = () => {
+  // start editing mode
+  const startEditing = useCallback(() => {
     setIsEditing(true);
-  };
+  }, []);
 
-  const handleBudgetChange = (value: string) => {
+  // handle budget input change
+  const handleBudgetChange = useCallback((value: string) => {
     setNewBudget(value);
-  };
+  }, []);
 
+  // handle successful update
   useEffect(() => {
-    const budget = updatedBudget as UpdatedBudget | undefined;
-
-    if (budget?.success) {
+    const result = updateResult as UpdateResult | undefined;
+    if (result?.success) {
       setIsEditing(false);
-      toast.success("Budget updated successfully");
+      toast.success("budget updated successfully");
     }
-  }, [updatedBudget]);
+  }, [updateResult]);
 
   useEffect(() => {
     if (error) {
       const err = error as Error;
-      toast.error(err.message || "Failed to update budget");
+      toast.error(err.message || "failed to update budget");
     }
   }, [error]);
 
