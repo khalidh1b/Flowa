@@ -71,11 +71,15 @@ export const useTransactionForm = (
         [categories, type]
     );
 
-    // form submission handler
-    const onSubmit = useCallback(async (data: TransactionFormValues) => 
-        await createOnSubmit(data, transactionFn),
-        [createOnSubmit, transactionFn]
-    );
+    // form submission handler using the useFetch execute function
+    const onSubmit = useCallback(async (data: TransactionFormValues) => {
+        try {
+            await transactionFn(data);
+        } catch (error) {
+            // Error is already handled by useFetch hook
+            console.error("Form submission failed:", error);
+        }
+    }, [transactionFn]);
 
     // handle successful transaction submission
     useEffect(() => {
