@@ -3,82 +3,88 @@ import useFetch from '@/hooks/use-fetch';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 
+interface ReceiptData {
+    [key: string]: unknown;
+};
+
 interface UseReceiptScannerProps {
-    onScanComplete: (data: any) => void;
-}
+    onScanComplete: (data: ReceiptData) => void;
+};
 
-interface ScannedData {
-    [key: string]: any;
-}
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ERROR_MESSAGES = {
+    FILE_TOO_LARGE: 'file size should be less than 5mb',
+    SCAN_FAILED: 'failed to process the receipt image',
+    AI_RATE_LIMIT: 'ai service temporarily unavailable. please try again in a moment',
+    SCAN_SUCCESS: 'receipt scanned successfully'
+} as const;
 
+// custom hook for scanning and processing receipt images
 export const useReceiptScanner = ({ onScanComplete }: UseReceiptScannerProps) => {
     const {
         loading: scanReceiptLoading,
-        fn: scanReceiptFn,
+        execute: scanReceiptFn,
         data: scannedData,
     } = useFetch(scanReceipt);
 
+    // validates file size before processing
     const validateFile = (file: File): boolean => {
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error("File size should be less than 5MB");
+        if (file.size > MAX_FILE_SIZE) {
+            toast.error(ERROR_MESSAGES.FILE_TOO_LARGE);
             return false;
         }
         return true;
     };
 
+    // converts file to base64 string for api submission
     const convertFileToBase64 = (file: File): Promise<string> => {
-        return new Promise<string>((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             const reader = new FileReader();
+            
             reader.onload = () => {
-                const result = reader.result;
-                if (result == null) {
-                    reject(new Error('Failed to read file: result is null'));
+                const result = reader.result as string;
+                const base64Data = result?.split(',')[1];
+                
+                if (!base64Data) {
+                    reject(new Error('failed to extract base64 data'));
                     return;
                 }
-                if (typeof result === 'string') {
-                    resolve(result.split(",")[1]);
-                } else {
-                    reject(new Error('Failed to read file: unexpected result type'));
-                }
+                
+                resolve(base64Data);
             };
-            reader.onerror = () => reject(new Error('Failed to read file'));
+            
+            reader.onerror = () => reject(new Error('file reading failed'));
             reader.readAsDataURL(file);
         });
     };
 
+    // main function to handle the complete receipt scanning process
     const handleReceiptScan = async (file: File): Promise<void> => {
-        if (!validateFile(file)) {
-            return;
-        }
+        if (!validateFile(file)) return;
 
         try {
             const base64String = await convertFileToBase64(file);
-            const mimeType = file.type;
-            await scanReceiptFn(base64String, mimeType);
+            await scanReceiptFn(base64String, file.type);
         } catch (error) {
-            toast.error("Failed to process the receipt image");
-            console.error('Receipt scan error:', error);
+            toast.error(ERROR_MESSAGES.SCAN_FAILED);
+            console.error('receipt scan error:', error);
         }
     };
 
+    // monitors scan results and handles success/error states
     useEffect(() => {
-        //console.log('useEffect scanned data', scannedData);
-        const hasDataBeenProcessed = scannedData !== undefined && scannedData !== null;
+        if (scanReceiptLoading || !scannedData) return;
 
-        if (scannedData && !scanReceiptLoading && Object.keys(scannedData).length > 0) {
+        if (Object.keys(scannedData).length > 0) {
             onScanComplete(scannedData);
-            toast.success("Receipt scanned successfully");
-        } else if (!scanReceiptLoading && hasDataBeenProcessed) {
-            toast.error(
-                `I apologize! I was unable to produce a response for your request. 
-                Quick Note: This application uses a free-tier AI model, which occasionally fails 
-                to return data due to rate limits or system load. Please try again🙏`, 
-                {
-                    duration: 8000,
-                    position: 'top-center'
-                }
-            );
+            toast.success(ERROR_MESSAGES.SCAN_SUCCESS);
+            return;
         }
+
+        toast.error(ERROR_MESSAGES.AI_RATE_LIMIT, {
+            duration: 5000,
+            position: 'top-center'
+        });
     }, [scanReceiptLoading, scannedData, onScanComplete]);
 
     return {
